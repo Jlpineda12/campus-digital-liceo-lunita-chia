@@ -1,0 +1,1634 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Campus Digital Liceo Lunita de Chía — Sistema de Diseño Dual
+   SISTEMA_DISENO.md: una sola marca, tres registros por etapa (data-stage):
+   · primaria       → lúdico, táctil 3D (Nunito, radios grandes, labio inferior)
+   · bachillerato   → serio y editorial (Inter, bordes finos, movimiento preciso)
+   · institucional  → profesional y denso (docentes, directivos, marco acudiente)
+   Los componentes NO se duplican: consumen variables que cambian por etapa.
+   ========================================================================== */
+
+/* Fuentes self-hosted (public/fonts) */
+@font-face {
+  font-family: "Nunito Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 1000;
+  src: url("/fonts/nunito-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+@font-face {
+  font-family: "Nunito Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 1000;
+  src: url("/fonts/nunito-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/inter-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ---------------------------------------------------------------------------
+   Tokens de marca y contraste AA (SISTEMA_DISENO.md §2)
+   --------------------------------------------------------------------------- */
+:root {
+  --yellow: #ffc800;
+  --yellow-d: #e5a400;
+  --yellow-l: #fff4c2;
+
+  --blue: #303296;
+  --blue-d: #22246f;
+  --blue-l: #e7e8fb;
+  --cobalt: #303296;
+  --cobalt-d: #22246f;
+
+  --navy: #0f1747;
+  --navy-d: #070c2e;
+  --lilac: #e7e3ff;
+
+  /* Brillantes: decorativos, bordes y fondos suaves. -solid: texto blanco encima (≥ 4.5:1). */
+  --sky: #1cb0f6;
+  --sky-d: #1899d6;
+  --sky-l: #ddf4ff;
+  --sky-solid: #0369a1;
+
+  --green: #58cc02;
+  --green-d: #46a302;
+  --green-l: #e5f8d4;
+  --green-solid: #2f7d00;
+
+  --orange: #ff9600;
+  --orange-d: #e08600;
+  --orange-l: #fff0db;
+  --orange-solid: #b45309;
+
+  --purple: #ce82ff;
+  --purple-d: #a568cc;
+  --purple-l: #f6e9ff;
+  --purple-solid: #6d28d9;
+
+  --red: #ff4b4b;
+  --red-d: #ea2b2b;
+  --red-l: #ffe3e3;
+  --red-solid: #c81e1e;
+
+  --pink: #ff86d0;
+  --pink-l: #ffe6f5;
+  --pink-solid: #be185d;
+
+  --bg: #ffffff;
+  --bg-2: #f7f8fb;
+  --cloud: #f4f8ff;
+
+  --ink: #1e2436;
+  --ink-2: #364152;
+  --muted: #525c70;
+  --placeholder: #647084;
+
+  --line: #e2e8f0;
+  --line-2: #cbd5e1;
+
+  --font-playful: "Nunito Variable", ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+  --font-pro: "Inter Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-quick: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Acento del rol activo (se redefine con [data-role]) */
+  --role: var(--sky);
+  --role-d: var(--sky-d);
+  --role-l: var(--sky-l);
+  --role-solid: var(--sky-solid);
+}
+
+/* ---------------------------------------------------------------------------
+   Registro por etapa. Sin data-stage (login y páginas públicas) rige "primaria".
+   --------------------------------------------------------------------------- */
+:root,
+[data-stage="primaria"] {
+  --font-ui: var(--font-playful);
+  --surface-canvas: #ffffff;
+  --body-weight: 500;
+  --heading-weight: 900;
+  --subheading-weight: 800;
+  --heading-tracking: -0.035em;
+  --label-weight: 800;
+  --label-tracking: 0.06em;
+
+  --r-card: 24px;
+  --r-card-lg: 32px;
+  --r-btn: 999px;
+  --r-control: 14px;
+  --r-chip: 999px;
+  --r-icon: 16px;
+  --r-icon-sm: 12px;
+  --card-border-w: 2px;
+  --card-border-b: 5px;
+  --card-shadow: none;
+  --card-pad: clamp(1.1rem, 2.2vw, 1.5rem);
+
+  --btn-h: 48px;
+  --btn-h-sm: 40px;
+  --btn-lip: 4px;
+  --btn-case: uppercase;
+  --btn-tracking: 0.06em;
+  --btn-weight: 800;
+
+  --dur: 220ms;
+  --ease-ui: var(--spring);
+
+  --step-0: clamp(1rem, 0.97rem + 0.18vw, 1.08rem);
+  --step-1: clamp(1.15rem, 1.08rem + 0.35vw, 1.35rem);
+  --step-2: clamp(1.4rem, 1.25rem + 0.7vw, 1.85rem);
+  --step-3: clamp(1.75rem, 1.45rem + 1.4vw, 2.6rem);
+  --step-4: clamp(2.1rem, 1.6rem + 2.4vw, 3.5rem);
+}
+
+[data-stage="bachillerato"],
+[data-stage="institucional"] {
+  --font-ui: var(--font-pro);
+  --surface-canvas: #fafbfd;
+  --body-weight: 400;
+  --heading-weight: 700;
+  --subheading-weight: 600;
+  --heading-tracking: -0.02em;
+  --label-weight: 600;
+  --label-tracking: 0.04em;
+
+  --r-card: 18px;
+  --r-card-lg: 22px;
+  --r-btn: 12px;
+  --r-control: 10px;
+  --r-chip: 8px;
+  --r-icon: 12px;
+  --r-icon-sm: 10px;
+  --card-border-w: 1px;
+  --card-border-b: 1px;
+  --card-shadow:
+    0 4px 20px -4px rgb(15 23 71 / 0.06),
+    0 1px 3px rgb(15 23 71 / 0.03);
+  --card-pad: clamp(1.05rem, 1.8vw, 1.3rem);
+
+  --btn-h: 42px;
+  --btn-h-sm: 36px;
+  --btn-lip: 0px;
+  --btn-case: none;
+  --btn-tracking: 0;
+  --btn-weight: 600;
+
+  --dur: 160ms;
+  --ease-ui: var(--ease-out-quick);
+
+  --step-0: clamp(0.95rem, 0.93rem + 0.1vw, 1rem);
+  --step-1: clamp(1.05rem, 1rem + 0.25vw, 1.15rem);
+  --step-2: clamp(1.15rem, 1.05rem + 0.45vw, 1.4rem);
+  --step-3: clamp(1.45rem, 1.25rem + 0.9vw, 1.95rem);
+  --step-4: clamp(1.8rem, 1.5rem + 1.4vw, 2.6rem);
+
+  /* Los pesos de Tailwind se suavizan: el mismo componente luce sobrio con Inter. */
+  --font-weight-black: 700;
+  --font-weight-extrabold: 650;
+  --font-weight-bold: 600;
+  --font-weight-semibold: 500;
+}
+
+[data-stage="institucional"] {
+  --r-card: 16px;
+  --r-btn: 10px;
+  --btn-h: 40px;
+  --heading-tracking: -0.015em;
+  --dur: 120ms;
+}
+
+/* Tailwind solo expone la paleta institucional: nada de colores fuera de marca. */
+@theme {
+  --color-*: initial;
+  --breakpoint-tab: 45rem; /* 720px: punto donde el sitio Astro oculta la .tabbar */
+}
+
+@theme inline {
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-yellow: var(--yellow);
+  --color-yellow-d: var(--yellow-d);
+  --color-yellow-l: var(--yellow-l);
+  --color-blue: var(--blue);
+  --color-blue-d: var(--blue-d);
+  --color-blue-l: var(--blue-l);
+  --color-cobalt: var(--cobalt);
+  --color-navy: var(--navy);
+  --color-navy-d: var(--navy-d);
+  --color-lilac: var(--lilac);
+  --color-sky: var(--sky);
+  --color-sky-d: var(--sky-d);
+  --color-sky-l: var(--sky-l);
+  --color-sky-solid: var(--sky-solid);
+  --color-green: var(--green);
+  --color-green-d: var(--green-d);
+  --color-green-l: var(--green-l);
+  --color-green-solid: var(--green-solid);
+  --color-orange: var(--orange);
+  --color-orange-d: var(--orange-d);
+  --color-orange-l: var(--orange-l);
+  --color-orange-solid: var(--orange-solid);
+  --color-purple: var(--purple);
+  --color-purple-d: var(--purple-d);
+  --color-purple-l: var(--purple-l);
+  --color-purple-solid: var(--purple-solid);
+  --color-red: var(--red);
+  --color-red-d: var(--red-d);
+  --color-red-l: var(--red-l);
+  --color-red-solid: var(--red-solid);
+  --color-pink: var(--pink);
+  --color-pink-l: var(--pink-l);
+  --color-pink-solid: var(--pink-solid);
+  --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
+  --color-cloud: var(--cloud);
+  --color-canvas: var(--surface-canvas);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-placeholder: var(--placeholder);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-role: var(--role);
+  --color-role-d: var(--role-d);
+  --color-role-l: var(--role-l);
+  --color-role-solid: var(--role-solid);
+
+  --font-sans: var(--font-ui);
+  --font-playful: var(--font-playful);
+  --font-pro: var(--font-pro);
+
+  --radius-pill: 999px;
+  --radius-card: var(--r-card);
+  --radius-card-lg: var(--r-card-lg);
+  --radius-control: var(--r-control);
+  --radius-icon: var(--r-icon);
+  --radius-icon-sm: var(--r-icon-sm);
+  --radius-chip: var(--r-chip);
+
+  --ease-lunita: var(--ease);
+  --ease-spring: var(--spring);
+
+  --text-step-0: var(--step-0);
+  --text-step-1: var(--step-1);
+  --text-step-2: var(--step-2);
+  --text-step-3: var(--step-3);
+  --text-step-4: var(--step-4);
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-padding-block-start: 5rem;
+  }
+
+  body,
+  [data-stage] {
+    font-family: var(--font-ui);
+    font-size: var(--step-0);
+    font-weight: var(--body-weight);
+    line-height: 1.6;
+    color: var(--ink-2);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background: var(--bg);
+    overflow-x: clip;
+  }
+
+  [data-stage] {
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  h1,
+  h2 {
+    color: var(--navy);
+    font-weight: var(--heading-weight);
+    letter-spacing: var(--heading-tracking);
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+
+  h3,
+  h4 {
+    color: var(--navy);
+    font-weight: var(--subheading-weight);
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  strong {
+    color: var(--ink);
+    font-weight: var(--subheading-weight);
+  }
+
+  a {
+    color: var(--sky-solid);
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 2px;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--placeholder);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--sky);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: var(--yellow);
+    color: var(--navy);
+  }
+
+  .tabular,
+  table,
+  time {
+    font-variant-numeric: tabular-nums;
+  }
+
+  [data-role="STUDENT"] {
+    --role: var(--sky);
+    --role-d: var(--sky-d);
+    --role-l: var(--sky-l);
+    --role-solid: var(--sky-solid);
+  }
+  [data-role="GUARDIAN"] {
+    --role: var(--green);
+    --role-d: var(--green-d);
+    --role-l: var(--green-l);
+    --role-solid: var(--green-solid);
+  }
+  [data-role="TEACHER"] {
+    --role: var(--purple);
+    --role-d: var(--purple-d);
+    --role-l: var(--purple-l);
+    --role-solid: var(--purple-solid);
+  }
+  [data-role="COORDINATOR"],
+  [data-role="ADMIN"] {
+    --role: var(--yellow);
+    --role-d: var(--yellow-d);
+    --role-l: var(--yellow-l);
+    --role-solid: var(--navy);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Componentes (consumen las variables de etapa)
+   --------------------------------------------------------------------------- */
+@layer components {
+  /* A. Botones */
+  .btn {
+    --c: var(--yellow);
+    --cd: var(--yellow-d);
+    --solid: var(--yellow);
+    --on-c: var(--navy);
+    --on-solid: var(--navy);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: var(--btn-h);
+    padding: 0.6rem 1.4rem;
+    border: 0;
+    border-radius: var(--r-btn);
+    background: var(--btn-bg, var(--c));
+    color: var(--btn-fg, var(--on-c));
+    box-shadow: 0 var(--btn-lip) 0 var(--cd);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: var(--btn-weight);
+    letter-spacing: var(--btn-tracking);
+    line-height: 1.2;
+    text-transform: var(--btn-case);
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      transform var(--dur) var(--ease-ui),
+      box-shadow var(--dur) var(--ease-ui),
+      background-color var(--dur),
+      filter var(--dur);
+  }
+  .btn:hover {
+    filter: brightness(1.05);
+  }
+  .btn:active {
+    transform: translateY(var(--btn-lip));
+    box-shadow: 0 0 0 var(--cd);
+  }
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    cursor: not-allowed;
+    filter: saturate(0.5) opacity(0.65);
+    transform: none;
+  }
+  .btn svg {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    transition: transform var(--dur) var(--ease-ui);
+  }
+  .btn:hover svg:last-child:not(:first-child) {
+    transform: translateX(3px);
+  }
+  .btn-sm {
+    min-height: var(--btn-h-sm);
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+  }
+  .btn-sm svg {
+    width: 16px;
+    height: 16px;
+  }
+  .btn-block {
+    width: 100%;
+  }
+  /* Variantes: sobre brillante va texto navy; sobre -solid, texto blanco (AA). */
+  .btn-blue {
+    --c: var(--blue);
+    --cd: var(--blue-d);
+    --solid: var(--blue);
+    --on-c: #fff;
+    --on-solid: #fff;
+  }
+  .btn-sky {
+    --c: var(--sky);
+    --cd: var(--sky-d);
+    --solid: var(--sky-solid);
+    --on-c: var(--navy);
+    --on-solid: #fff;
+  }
+  .btn-green {
+    --c: var(--green);
+    --cd: var(--green-d);
+    --solid: var(--green-solid);
+    --on-c: var(--navy);
+    --on-solid: #fff;
+  }
+  .btn-purple {
+    --c: var(--purple);
+    --cd: var(--purple-d);
+    --solid: var(--purple-solid);
+    --on-c: var(--navy);
+    --on-solid: #fff;
+  }
+  .btn-orange {
+    --c: var(--orange);
+    --cd: var(--orange-d);
+    --solid: var(--orange-solid);
+    --on-c: var(--navy);
+    --on-solid: #fff;
+  }
+  .btn-red {
+    --c: var(--red);
+    --cd: var(--red-d);
+    --solid: var(--red-solid);
+    --on-c: var(--navy);
+    --on-solid: #fff;
+  }
+  .btn-navy {
+    --c: var(--navy);
+    --cd: #000;
+    --solid: var(--navy);
+    --on-c: #fff;
+    --on-solid: #fff;
+  }
+  .btn-outline {
+    --c: #fff;
+    --cd: var(--line);
+    --solid: #fff;
+    --on-c: var(--navy);
+    --on-solid: var(--navy);
+    border: var(--card-border-w) solid var(--line-2);
+  }
+  .block-navy .btn-outline,
+  .block-cobalt .btn-outline {
+    --c: transparent;
+    --solid: transparent;
+    --cd: rgb(0 0 0 / 0.25);
+    --on-c: #fff;
+    --on-solid: #fff;
+    border-color: rgb(255 255 255 / 0.6);
+  }
+  [data-stage="bachillerato"] .btn,
+  [data-stage="institucional"] .btn {
+    --btn-bg: var(--solid);
+    --btn-fg: var(--on-solid);
+  }
+  [data-stage="bachillerato"] .btn:hover,
+  [data-stage="institucional"] .btn:hover {
+    filter: brightness(0.94);
+    box-shadow: 0 6px 16px -8px color-mix(in oklab, var(--solid) 70%, transparent);
+    transform: translateY(-1px);
+  }
+  [data-stage="bachillerato"] .btn:active,
+  [data-stage="institucional"] .btn:active {
+    transform: translateY(0) scale(0.985);
+    box-shadow: none;
+  }
+  [data-stage="bachillerato"] .btn-outline:hover,
+  [data-stage="institucional"] .btn-outline:hover {
+    --btn-bg: var(--cloud);
+    filter: none;
+  }
+
+  /* B. Tarjetas */
+  .card {
+    position: relative;
+    background: #fff;
+    border: var(--card-border-w) solid var(--line);
+    border-bottom-width: var(--card-border-b);
+    border-radius: var(--r-card);
+    box-shadow: var(--card-shadow);
+    padding: var(--card-pad);
+  }
+  .card-lg {
+    border-radius: var(--r-card-lg);
+  }
+  a.card,
+  .card-interactive {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    transition:
+      transform var(--dur) var(--ease-ui),
+      border-color var(--dur),
+      background-color var(--dur),
+      box-shadow var(--dur);
+  }
+  a.card:hover,
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    border-color: var(--c, var(--line-2));
+    background: color-mix(in oklab, var(--l, #fff) 35%, #fff);
+  }
+  a.card:active,
+  .card-interactive:active {
+    transform: translateY(2px);
+    border-bottom-width: 3px;
+  }
+  [data-stage="bachillerato"] :is(a.card, .card-interactive):hover,
+  [data-stage="institucional"] :is(a.card, .card-interactive):hover {
+    background: #fff;
+    border-color: color-mix(in oklab, var(--c, var(--line-2)) 45%, var(--line));
+    box-shadow:
+      0 12px 24px -12px rgb(15 23 71 / 0.22),
+      0 2px 4px rgb(15 23 71 / 0.05);
+  }
+  [data-stage="bachillerato"] :is(a.card, .card-interactive):active,
+  [data-stage="institucional"] :is(a.card, .card-interactive):active {
+    transform: translateY(0);
+    border-bottom-width: var(--card-border-b);
+  }
+  .block-navy .card,
+  .block-cobalt .card {
+    color: var(--ink-2);
+    border-color: transparent transparent rgb(0 0 0 / 0.18);
+  }
+  .block-navy .card :where(h1, h2, h3, h4),
+  .block-cobalt .card :where(h1, h2, h3, h4) {
+    color: var(--navy);
+  }
+
+  /* Etiquetas */
+  .kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: var(--label-weight);
+    letter-spacing: var(--label-tracking);
+    text-transform: uppercase;
+    color: var(--sky-solid);
+  }
+  .kicker .moon {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    transform: rotate(-20deg);
+    box-shadow: inset -4px 1px 0 0 currentColor;
+  }
+  .block-navy .kicker,
+  .block-cobalt .kicker {
+    color: var(--yellow);
+  }
+  .block-navy .card .kicker,
+  .block-cobalt .card .kicker {
+    color: var(--sky-solid);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--r-chip);
+    background: var(--l, var(--sky-l));
+    color: var(--t-ink, var(--sky-solid));
+    font-size: 0.74rem;
+    font-weight: var(--label-weight);
+    letter-spacing: var(--label-tracking);
+    line-height: 1.3;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .chip svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* C. Burbujas de icono */
+  .icon-bubble {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--r-icon);
+    background: var(--l, var(--sky-l));
+    color: var(--t-ink, var(--sky-solid));
+    transition: transform var(--dur) var(--ease-ui);
+  }
+  .icon-bubble svg {
+    width: 26px;
+    height: 26px;
+  }
+  .icon-bubble-sm {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-icon-sm);
+  }
+  .icon-bubble-sm svg {
+    width: 20px;
+    height: 20px;
+  }
+  [data-stage="bachillerato"] .icon-bubble,
+  [data-stage="institucional"] .icon-bubble {
+    width: 44px;
+    height: 44px;
+  }
+  [data-stage="bachillerato"] .icon-bubble svg,
+  [data-stage="institucional"] .icon-bubble svg {
+    width: 22px;
+    height: 22px;
+  }
+  .card:hover .icon-bubble {
+    transform: rotate(-6deg) scale(1.06);
+  }
+  [data-stage="bachillerato"] .card:hover .icon-bubble,
+  [data-stage="institucional"] .card:hover .icon-bubble {
+    transform: translateY(-2px);
+  }
+
+  /* Insignia de pilar STHEAMI: planeta 3D en primaria; marca discreta en las demás. */
+  .pillar-tile {
+    --size: 32px;
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: var(--size);
+    height: var(--size);
+    border-radius: calc(var(--size) * 0.34);
+    background: var(--c);
+    color: var(--navy);
+    box-shadow: 0 3px 0 color-mix(in oklab, var(--c) 75%, #000);
+    font-family: var(--font-playful);
+    font-size: calc(var(--size) * 0.5);
+    font-weight: 900;
+    line-height: 1;
+    transition: transform var(--dur) var(--ease-ui);
+  }
+  :is(a, button, .card):hover .pillar-tile {
+    transform: rotate(-6deg) scale(1.06);
+  }
+  [data-stage="bachillerato"] .pillar-tile,
+  [data-stage="institucional"] .pillar-tile {
+    --size: 26px;
+    border-radius: 6px;
+    background: var(--l);
+    color: var(--t-ink);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--c) 45%, transparent);
+    font-family: var(--font-pro);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  [data-stage="bachillerato"] :is(a, button, .card):hover .pillar-tile,
+  [data-stage="institucional"] :is(a, button, .card):hover .pillar-tile {
+    transform: none;
+  }
+
+  /* Avatar con contraste garantizado (texto navy sobre el tono brillante) */
+  .avatar {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: var(--c, var(--role));
+    color: var(--navy);
+    box-shadow: 0 3px 0 var(--cd, var(--role-d));
+    font-family: var(--font-playful);
+    font-size: 0.875rem;
+    font-weight: 900;
+  }
+  .avatar-lg {
+    width: 48px;
+    height: 48px;
+    font-size: 1.05rem;
+  }
+  [data-stage="bachillerato"] .avatar,
+  [data-stage="institucional"] .avatar {
+    box-shadow: none;
+    font-family: var(--font-pro);
+    font-weight: 700;
+  }
+
+  /* D. Tablas */
+  .tactile-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.95rem;
+  }
+  .tactile-table th {
+    padding: 0.7rem 1rem;
+    border-bottom: var(--card-border-w) solid var(--line);
+    background: var(--cloud);
+    color: var(--navy);
+    font-size: 0.74rem;
+    font-weight: var(--label-weight);
+    letter-spacing: var(--label-tracking);
+    text-align: left;
+    text-transform: uppercase;
+  }
+  .tactile-table td {
+    padding: 0.7rem 1rem;
+    border-bottom: var(--card-border-w) solid var(--line);
+    transition: background-color var(--dur);
+  }
+  .tactile-table tbody tr:hover td {
+    background: color-mix(in oklab, var(--cloud) 70%, #fff);
+  }
+  .tactile-table tr:last-child td {
+    border-bottom: 0;
+  }
+  [data-stage="bachillerato"] .tactile-table th,
+  [data-stage="institucional"] .tactile-table th {
+    background: #f8fafc;
+    color: var(--muted);
+  }
+
+  /* Planilla SIEE tipo hoja de cálculo */
+  .gradebook {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+  }
+  .gradebook th,
+  .gradebook td {
+    border-bottom: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    background: #fff;
+  }
+  .gradebook thead th {
+    background: #f8fafc;
+    color: var(--navy);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-align: center;
+    vertical-align: bottom;
+  }
+  .gradebook__dim {
+    padding: 0.55rem 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em !important;
+  }
+  .gradebook__col {
+    min-width: 5.5rem;
+    max-width: 9rem;
+    padding: 0.45rem 0.5rem;
+  }
+  .gradebook__weight {
+    display: block;
+    color: var(--muted);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .gradebook__sticky {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    box-shadow: 1px 0 0 var(--line), 6px 0 12px -10px rgb(15 23 71 / 0.35);
+  }
+  .gradebook__student {
+    min-width: 14rem;
+    max-width: 16rem;
+    padding: 0.4rem 0.9rem;
+    text-align: left !important;
+    font-weight: 500;
+  }
+  .gradebook__cell {
+    padding: 0.2rem;
+    text-align: center;
+  }
+  .gradebook tbody tr:hover :is(td, th) {
+    background: color-mix(in oklab, var(--cloud) 75%, #fff);
+  }
+  .gradebook__result {
+    background: color-mix(in oklab, var(--cloud) 60%, #fff) !important;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  .gradebook__input {
+    width: 100%;
+    min-width: 4.5rem;
+    height: 2.25rem;
+    padding: 0 0.4rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--navy);
+    font: inherit;
+    font-weight: 600;
+    text-align: center;
+    transition:
+      border-color var(--dur),
+      box-shadow var(--dur),
+      background-color var(--dur);
+  }
+  .gradebook__input:hover {
+    border-color: var(--line-2);
+  }
+  .gradebook__input:focus,
+  .gradebook__input:focus-visible {
+    outline: none;
+    border-color: var(--sky-solid);
+    background: #fff;
+    box-shadow: 0 0 0 3px var(--sky-l);
+  }
+  .gradebook__input--dirty {
+    background: var(--yellow-l);
+  }
+  .gradebook__input[aria-invalid="true"] {
+    border-color: var(--red-solid);
+    background: var(--red-l);
+  }
+  .gradebook__select {
+    min-width: 10rem;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  /* Formularios */
+  .field-label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--navy);
+    font-size: 0.78rem;
+    font-weight: var(--label-weight);
+    letter-spacing: var(--label-tracking);
+    text-transform: uppercase;
+  }
+  .input {
+    width: 100%;
+    min-height: 52px;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--line-2);
+    border-bottom-width: 4px;
+    border-radius: var(--r-control);
+    background: #fff;
+    color: var(--navy);
+    font: inherit;
+    font-size: 1.02rem;
+    font-weight: 700;
+    transition:
+      border-color var(--dur),
+      box-shadow var(--dur);
+  }
+  .input:focus,
+  .input:focus-visible {
+    outline: none;
+    border-color: var(--sky-solid);
+    box-shadow: 0 0 0 3px var(--sky-l);
+  }
+  .input[aria-invalid="true"] {
+    border-color: var(--red-solid);
+  }
+
+  /* E. Motivos institucionales */
+  .block-navy,
+  .block-cobalt {
+    color: #fff;
+    background-image:
+      radial-gradient(1.6px 1.6px at 12% 22%, #fffc 50%, #0000 51%),
+      radial-gradient(1.2px 1.2px at 32% 68%, #fff9 50%, #0000 51%),
+      radial-gradient(2px 2px at 58% 18%, #ffc800e6 50%, #0000 51%),
+      radial-gradient(1.2px 1.2px at 74% 76%, #ffffff8c 50%, #0000 51%),
+      radial-gradient(1.6px 1.6px at 90% 36%, #ffffffb3 50%, #0000 51%);
+    background-size: 520px 360px;
+  }
+  .block-navy {
+    background-color: var(--navy);
+  }
+  .block-cobalt {
+    background-color: var(--cobalt);
+  }
+  .block-navy :where(h1, h2, h3, h4),
+  .block-cobalt :where(h1, h2, h3, h4) {
+    color: #fff;
+  }
+  .block-navy .hl,
+  .block-cobalt .hl {
+    color: var(--yellow);
+  }
+  /* Bachillerato e institucional: navy sólido, sin estrellas. */
+  [data-stage="bachillerato"] :is(.block-navy, .block-cobalt),
+  [data-stage="institucional"] :is(.block-navy, .block-cobalt) {
+    background-image: none;
+  }
+  /* Mascota Lunita: solo primaria y desde 640px (la visibilidad vive aquí, no en utilidades). */
+  .mascot {
+    display: none;
+    animation: bob 4s ease-in-out infinite;
+  }
+  @media (width >= 40rem) {
+    .mascot {
+      display: block;
+    }
+  }
+  [data-stage="bachillerato"] .mascot,
+  [data-stage="institucional"] .mascot {
+    display: none;
+  }
+
+  .muisca {
+    height: 26px;
+    background: var(--yellow)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='26' viewBox='0 0 52 26'%3E%3Cpath d='M0 13 13 0l13 13-13 13z' fill='%23303296'/%3E%3Cpath d='M26 13 39 0l13 13-13 13z' fill='%230f1747'/%3E%3Cpath d='M13 8l5 5-5 5-5-5z' fill='%23ffc800'/%3E%3Cpath d='M39 8l5 5-5 5-5-5z' fill='%23fff'/%3E%3C/svg%3E")
+      repeat-x center / 52px 26px;
+  }
+  .muisca-thin {
+    height: 14px;
+    background-size: 28px 14px;
+  }
+
+  /* Encabezado del panel */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--r-card-lg);
+    padding: clamp(1.5rem, 3vw, 2rem);
+  }
+  [data-stage="bachillerato"] .hero,
+  [data-stage="institucional"] .hero {
+    padding: clamp(1.1rem, 2.2vw, 1.5rem) clamp(1.25rem, 2.4vw, 1.75rem);
+  }
+  /* Línea dorada que recorre el borde inferior del encabezado serio */
+  [data-stage="bachillerato"] .hero::after,
+  [data-stage="institucional"] .hero::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--yellow), var(--role) 60%, transparent);
+    transform-origin: left;
+    animation: grow-x 900ms var(--ease) both;
+  }
+
+  /* Barra de progreso animada */
+  .progress {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.15);
+  }
+  .progress > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--yellow);
+    transform-origin: left;
+    animation: grow-x 1100ms var(--ease) 150ms both;
+  }
+  .progress-fill {
+    transform-origin: left;
+    animation: grow-x 1000ms var(--ease) 250ms both;
+  }
+  [data-stage="bachillerato"] .progress,
+  [data-stage="institucional"] .progress {
+    height: 6px;
+  }
+
+  /* Asignaturas: tarjetas grandes en primaria; lista editorial en bachillerato */
+  .course-grid {
+    display: grid;
+    gap: 1rem;
+  }
+  @media (width >= 40rem) {
+    .course-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (width >= 80rem) {
+    .course-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .course-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .course-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .course-card__title {
+    font-size: 1.125rem;
+  }
+  .course-card__meta {
+    display: grid;
+    gap: 0.25rem;
+    margin-top: auto;
+    color: var(--muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .course-card__meta > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+  .course-card__meta svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+  }
+  [data-stage="bachillerato"] .course-grid,
+  [data-stage="institucional"] .course-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--r-card);
+    background: #fff;
+    box-shadow: var(--card-shadow);
+  }
+  [data-stage="bachillerato"] .course-card,
+  [data-stage="institucional"] .course-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.25rem 0.875rem;
+    padding: 0.8rem 1rem 0.8rem 1.15rem;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    box-shadow: inset 3px 0 0 var(--c);
+    transition:
+      box-shadow var(--dur) var(--ease-ui),
+      background-color var(--dur);
+  }
+  [data-stage="bachillerato"] .course-grid > li:last-child .course-card,
+  [data-stage="institucional"] .course-grid > li:last-child .course-card {
+    border-bottom: 0;
+  }
+  [data-stage="bachillerato"] .course-card:hover,
+  [data-stage="institucional"] .course-card:hover {
+    background: color-mix(in oklab, var(--l) 28%, #fff);
+    box-shadow: inset 5px 0 0 var(--c);
+  }
+  [data-stage="bachillerato"] .course-card__head,
+  [data-stage="institucional"] .course-card__head {
+    grid-row: span 2;
+  }
+  [data-stage="bachillerato"] .course-card__pillar,
+  [data-stage="institucional"] .course-card__pillar {
+    display: none;
+  }
+  [data-stage="bachillerato"] .course-card__title,
+  [data-stage="institucional"] .course-card__title {
+    font-size: 0.98rem;
+  }
+  [data-stage="bachillerato"] .course-card__meta,
+  [data-stage="institucional"] .course-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.1rem 1rem;
+    margin-top: 0;
+    font-size: 0.82rem;
+  }
+
+  /* Marco degradado cobalto Lunita × VENTES (con brillo sutil en Primaria) */
+  .campus-frame {
+    background: linear-gradient(175deg, #252782 0%, #303296 52%, #433BB2 100%);
+  }
+  [data-stage="primaria"].campus-frame {
+    background-image:
+      radial-gradient(1.8px 1.8px at 6% 18%, #fffc 50%, #0000 51%),
+      radial-gradient(2px 2px at 14% 48%, #ffc800e6 50%, #0000 51%),
+      radial-gradient(1.5px 1.5px at 9% 76%, #ffffffb3 50%, #0000 51%),
+      linear-gradient(175deg, #282A8F 0%, #303296 48%, #4C42C0 100%);
+  }
+
+  /* Identidad visual sutil por zona activa (Órbita Virtual vs SIGA vs Admin) */
+  [data-zone="aula"].campus-frame {
+    background-image:
+      radial-gradient(1.8px 1.8px at 7% 20%, #fffc 50%, #0000 51%),
+      radial-gradient(2px 2px at 13% 58%, #ffc800e0 50%, #0000 51%),
+      linear-gradient(175deg, #251361 0%, #3E1F92 52%, #552DB8 100%);
+  }
+  [data-zone="admin"].campus-frame {
+    background-image: linear-gradient(175deg, #0B123B 0%, #192166 52%, #282F8A 100%);
+  }
+
+  /* Transición orgánica ultra-suave para ocultar/mostrar la barra lateral */
+  .campus-sidebar-rail {
+    transition:
+      transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 260ms ease;
+    will-change: transform, opacity;
+  }
+  .campus-canvas-pane {
+    transition:
+      margin-left 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-radius 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 380ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: margin-left;
+  }
+  .campus-edge-handle {
+    transition:
+      left 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 220ms var(--spring),
+      background-color 180ms ease,
+      box-shadow 220ms ease;
+  }
+
+  /* Skeleton shimmer loaders (efectos de carga modernos) */
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    background: linear-gradient(95deg, #edf0f7 0%, #f7f9ff 45%, #edf0f7 90%);
+    background-size: 220% 100%;
+    animation: lunita-shimmer 1.45s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  .campus-page-enter {
+    animation: campus-enter 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Navegación del Campus */
+  .nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: 14px;
+    color: rgb(255 255 255 / 0.84);
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      background-color var(--dur),
+      color var(--dur),
+      box-shadow var(--dur),
+      transform var(--dur) var(--ease-ui);
+  }
+  .nav-item svg {
+    flex: none;
+    width: 21px;
+    height: 21px;
+  }
+  a.nav-item:hover {
+    background: rgb(255 255 255 / 0.12);
+    color: #fff;
+    transform: translateX(2px);
+  }
+  .nav-item[aria-current="page"] {
+    background: #fff;
+    color: var(--cobalt);
+    font-weight: 700;
+    box-shadow: 0 8px 20px -8px rgb(7 12 46 / 0.42);
+  }
+  .nav-item[aria-current="page"] svg {
+    color: var(--cobalt);
+  }
+
+  .tabbar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 60;
+    display: grid;
+    grid-template-columns: repeat(var(--tabs, 5), minmax(0, 1fr));
+    padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom));
+    border-top: var(--card-border-w) solid var(--line);
+    background: rgb(255 255 255 / 0.96);
+    backdrop-filter: blur(8px);
+  }
+  .tabbar-item {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    padding: 0.3rem 0;
+    border: 0;
+    border-radius: var(--r-control);
+    background: none;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: var(--label-weight);
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color var(--dur);
+  }
+  .tabbar-item svg {
+    width: 24px;
+    height: 24px;
+    transition: transform var(--dur) var(--ease-ui);
+  }
+  .tabbar-item:active svg {
+    transform: scale(0.88);
+  }
+  .tabbar-item[aria-current="page"] {
+    color: var(--role-solid);
+  }
+  .tabbar-item[aria-current="page"] svg {
+    transform: translateY(-1px);
+  }
+
+  .skip-link {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 200;
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+    background: var(--yellow);
+    color: var(--navy);
+    font-weight: 800;
+    text-decoration: none;
+    transform: translateY(-160%);
+    transition: transform 0.2s;
+  }
+  .skip-link:focus {
+    transform: none;
+  }
+
+  /* Diálogos (buscador y menú) */
+  .dialog-pop[open] {
+    animation: dialog-in var(--dur) var(--ease-ui) both;
+  }
+  .dialog-pop[open]::backdrop {
+    animation: fade-in 180ms ease-out both;
+  }
+  .dialog-sheet[open] {
+    animation: sheet-in 260ms var(--ease) both;
+  }
+  .dialog-sheet[open]::backdrop {
+    animation: fade-in 180ms ease-out both;
+  }
+
+  /* Entrada escalonada: pop en primaria, ascenso suave en bachillerato */
+  .reveal {
+    animation: pop-in 420ms var(--spring) both;
+    animation-delay: calc(var(--i, 0) * 55ms);
+  }
+  [data-stage="bachillerato"] .reveal,
+  [data-stage="institucional"] .reveal {
+    animation: rise-in 380ms var(--ease) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+
+  /* Primaria anidada dentro de un marco institucional (p. ej. el acudiente que
+     consulta a un hijo de primaria). Va después de las reglas de bachillerato/
+     institucional y con la misma especificidad, así gana la etapa más cercana. */
+  [data-stage="primaria"] :is(a.card, .card-interactive):hover {
+    background: color-mix(in oklab, var(--l, #fff) 35%, #fff);
+    border-color: var(--c, var(--line-2));
+    box-shadow: none;
+  }
+  [data-stage="primaria"] :is(a.card, .card-interactive):active {
+    transform: translateY(2px);
+    border-bottom-width: 3px;
+  }
+  [data-stage="primaria"] .icon-bubble {
+    width: 52px;
+    height: 52px;
+  }
+  [data-stage="primaria"] .icon-bubble svg {
+    width: 26px;
+    height: 26px;
+  }
+  [data-stage="primaria"] .icon-bubble-sm {
+    width: 40px;
+    height: 40px;
+  }
+  [data-stage="primaria"] .icon-bubble-sm svg {
+    width: 20px;
+    height: 20px;
+  }
+  [data-stage="primaria"] .card:hover .icon-bubble {
+    transform: rotate(-6deg) scale(1.06);
+  }
+  [data-stage="primaria"] .pillar-tile {
+    --size: 32px;
+    border-radius: calc(var(--size) * 0.34);
+    background: var(--c);
+    color: var(--navy);
+    box-shadow: 0 3px 0 color-mix(in oklab, var(--c) 75%, #000);
+    font-family: var(--font-playful);
+    font-size: calc(var(--size) * 0.5);
+    font-weight: 900;
+  }
+  [data-stage="primaria"] :is(a, button, .card):hover .pillar-tile {
+    transform: rotate(-6deg) scale(1.06);
+  }
+  [data-stage="primaria"] .course-grid {
+    gap: 1rem;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  @media (width >= 40rem) {
+    [data-stage="primaria"] .course-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (width >= 80rem) {
+    [data-stage="primaria"] .course-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  [data-stage="primaria"] .course-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: var(--card-pad);
+    border: var(--card-border-w) solid var(--line);
+    border-bottom-width: var(--card-border-b);
+    border-radius: var(--r-card);
+    box-shadow: none;
+  }
+  [data-stage="primaria"] .course-card:last-child {
+    border-bottom-width: var(--card-border-b);
+  }
+  [data-stage="primaria"] .course-card:hover {
+    background: #fff;
+    box-shadow: none;
+  }
+  [data-stage="primaria"] .course-card__head {
+    grid-row: auto;
+  }
+  [data-stage="primaria"] .course-card__pillar {
+    display: inline-flex;
+  }
+  [data-stage="primaria"] .course-card__title {
+    font-size: 1.125rem;
+  }
+  [data-stage="primaria"] .course-card__meta {
+    display: grid;
+    gap: 0.25rem;
+    margin-top: auto;
+    font-size: 0.875rem;
+  }
+  [data-stage="primaria"] .reveal {
+    animation: pop-in 420ms var(--spring) both;
+    animation-delay: calc(var(--i, 0) * 55ms);
+  }
+
+  /* Tonos semánticos (al final para sobrescribir los valores por defecto):
+     --c brillante · --cd labio · --l fondo suave · --solid relleno AA · --t-ink texto sobre --l */
+  .t-sky {
+    --c: var(--sky);
+    --cd: var(--sky-d);
+    --l: var(--sky-l);
+    --solid: var(--sky-solid);
+    --t-ink: var(--sky-solid);
+  }
+  .t-green {
+    --c: var(--green);
+    --cd: var(--green-d);
+    --l: var(--green-l);
+    --solid: var(--green-solid);
+    --t-ink: var(--green-solid);
+  }
+  .t-orange {
+    --c: var(--orange);
+    --cd: var(--orange-d);
+    --l: var(--orange-l);
+    --solid: var(--orange-solid);
+    --t-ink: var(--orange-solid);
+  }
+  .t-purple {
+    --c: var(--purple);
+    --cd: var(--purple-d);
+    --l: var(--purple-l);
+    --solid: var(--purple-solid);
+    --t-ink: var(--purple-solid);
+  }
+  .t-red {
+    --c: var(--red);
+    --cd: var(--red-d);
+    --l: var(--red-l);
+    --solid: var(--red-solid);
+    --t-ink: var(--red-solid);
+  }
+  .t-yellow {
+    --c: var(--yellow);
+    --cd: var(--yellow-d);
+    --l: var(--yellow-l);
+    --solid: var(--yellow);
+    --t-ink: var(--navy);
+  }
+  .t-blue {
+    --c: var(--blue);
+    --cd: var(--blue-d);
+    --l: var(--blue-l);
+    --solid: var(--blue);
+    --t-ink: var(--blue);
+  }
+  .t-pink {
+    --c: var(--pink);
+    --cd: color-mix(in oklab, var(--pink) 80%, #000);
+    --l: var(--pink-l);
+    --solid: var(--pink-solid);
+    --t-ink: var(--pink-solid);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Movimiento
+   --------------------------------------------------------------------------- */
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes lunita-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+@keyframes campus-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes lunita-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@utility animate-bob {
+  animation: bob 4s ease-in-out infinite;
+}
+@utility animate-pop-in {
+  animation: pop-in 0.35s var(--spring) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Impresión limpia de Boletines Oficiales (oculta navegación y conserva colores) */
+@media print {
+  aside,
+  header:not(.report-sheet-header),
+  .tabbar,
+  .skip-link,
+  .no-print {
+    display: none !important;
+  }
+  [data-role] {
+    padding-left: 0 !important;
+    background: #fff !important;
+  }
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+  .report-sheet {
+    border: 0 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

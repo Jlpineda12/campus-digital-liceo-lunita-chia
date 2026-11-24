@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1795483876323,
+      "tag": "0000_futuristic_angel",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795490447092,
+      "tag": "0001_last_inertia",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795496535428,
+      "tag": "0002_broken_leech",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795553862462,
+      "tag": "0003_motionless_senator_kelly",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795560006637,
+      "tag": "0004_cynical_chronomancer",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795562730950,
+      "tag": "0005_smart_supreme_intelligence",
+      "breakpoints": true
+    }
+  ]
+}

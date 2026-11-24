@@ -1,0 +1,87 @@
+import { index, jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { users } from "./core";
+import { createdAt, id } from "./_helpers";
+
+export const AUDIT_ACTIONS = [
+  // Académicas (REGLAS.md §2.3)
+  "GRADE_UPDATED",
+  "GRADE_COLUMN_CREATED",
+  "LOGROS_UPDATED",
+  "PERIOD_LOCKED",
+  "PERIOD_OPENED",
+  "PERIOD_UNLOCKED",
+  "PERIOD_UNLOCK_CLOSED",
+  "OBSERVER_CREATED",
+  "OBSERVER_STATEMENT_RECORDED",
+  "OBSERVER_ACKNOWLEDGED",
+  "ATTENDANCE_RECORDED",
+  "EXCUSE_SUBMITTED",
+  "EXCUSE_REVIEWED",
+  "REPORT_CARDS_ISSUED",
+  "REPORT_CARDS_HIDDEN",
+  "REPORT_CARD_OBSERVATION_SAVED",
+  "CIRCULAR_CREATED",
+  "CIRCULAR_DELETED",
+  "CIRCULAR_READ",
+  "AULA_UNIT_CREATED",
+  "AULA_RESOURCE_CREATED",
+  "AULA_ACTIVITY_CREATED",
+  "AULA_SUBMISSION_SENT",
+  "AULA_SUBMISSION_GRADED",
+  "AULA_QUIZ_QUESTION_SAVED",
+  "AULA_QUIZ_ATTEMPT_SUBMITTED",
+  "AULA_COURSE_THEME_UPDATED",
+  "AULA_FORUM_POSTED",
+  "ENROLLMENT_APPROVED",
+  "ADMISSION_SUBMITTED",
+  "ADMISSION_DOC_REVIEWED",
+  "ADMISSION_ACADEMIC_APPROVED",
+  "BILLING_CHARGE_CREATED",
+  "BILLING_PAYMENT_RECORDED",
+  "BILLING_DISCOUNT_APPLIED",
+  "BILLING_EXPORTED",
+  "PAZ_Y_SALVO_ISSUED",
+  "MIGRATION_EXECUTED",
+  "SIMAT_EXPORTED",
+  // Seguridad de acceso y cuentas
+  "USER_LOGIN",
+  "USER_LOGIN_FAILED",
+  "USER_LOGOUT",
+  "USER_CREATED",
+  "USERS_BULK_IMPORTED",
+  "USER_UPDATED",
+  "PROFILE_AVATAR_UPDATED",
+  "USER_STATUS_CHANGED",
+  "USER_PASSWORD_ADMIN_RESET",
+  "GUARDIAN_LINK_CREATED",
+  "GUARDIAN_LINK_REMOVED",
+  "PASSWORD_RESET_REQUESTED",
+  "PASSWORD_RESET_COMPLETED",
+  "SESSIONS_REVOKED",
+  "VERIFY_QR_LOOKUP",
+] as const;
+export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+
+/** Registro inmutable: solo se inserta, nunca se actualiza ni se borra desde la aplicación. */
+export const auditLogs = pgTable(
+  "audit_logs",
+  {
+    id: id(),
+    actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+    action: text("action").$type<AuditAction>().notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    beforeJson: jsonb("before_json"),
+    afterJson: jsonb("after_json"),
+    ipAddress: text("ip_address"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("audit_logs_entity_idx").on(t.entityType, t.entityId),
+    index("audit_logs_action_created_idx").on(t.action, t.createdAt),
+    index("audit_logs_actor_idx").on(t.actorUserId),
+    // Límite de intentos (REGLAS.md §4.3): por cuenta y por IP.
+    index("audit_logs_throttle_idx").on(t.action, t.entityType, t.entityId, t.createdAt),
+    index("audit_logs_ip_idx").on(t.action, t.ipAddress, t.createdAt),
+  ],
+);
