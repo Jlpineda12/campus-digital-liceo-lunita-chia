@@ -6,10 +6,10 @@ import * as schema from "./schema";
 export const DEFAULT_DATABASE_URL = "postgresql://campus:campus_dev@localhost:5432/campus_lunita";
 
 export function resolveDatabaseUrl(): string {
-  const url = process.env.DATABASE_URL;
+  const url = process.env.DATABASE_URL?.trim() || process.env.POSTGRES_URL?.trim();
   if (url) return url;
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("DATABASE_URL es obligatoria en producción.");
+  if (process.env.NODE_ENV === "production" && process.env.NEXT_PHASE !== "phase-production-build") {
+    throw new Error("DATABASE_URL (o POSTGRES_URL) es obligatoria en producción.");
   }
   return DEFAULT_DATABASE_URL;
 }
@@ -26,15 +26,16 @@ export function isLocalDatabase(url: string): boolean {
 
 /**
  * Crea una conexión Drizzle sobre un pool de `pg` dimensionado para flujos de
- * 1.000+ usuarios (picos en boletines, asistencia y evaluaciones). En producción,
- * apuntar DATABASE_URL a un pooler (PgBouncer, Neon o Supabase en modo transacción).
+ * 1.000+ usuarios (picos en boletines, asistencia y evaluaciones). En serverless
+ * (Vercel + Neon) acota el pool por instancia para no saturar conexiones.
  */
 export function createDatabase(url: string = resolveDatabaseUrl()) {
+  const defaultMax = process.env.VERCEL ? 5 : 20;
   const pool = new Pool({
     connectionString: url,
-    max: Number(process.env.DATABASE_POOL_MAX ?? 20),
+    max: Number(process.env.DATABASE_POOL_MAX ?? defaultMax),
     idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 5_000,
+    connectionTimeoutMillis: 10_000,
     statement_timeout: 15_000,
     application_name: "campus-lunita",
   });

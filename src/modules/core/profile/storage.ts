@@ -40,7 +40,9 @@ export function buildAvatarApiUrl(userId: string, avatarKey: string | null | und
 
 function getStorageRoot(): string {
   const configured = process.env.PRIVATE_STORAGE_DIR?.trim();
-  return configured ? path.resolve(configured) : path.resolve(process.cwd(), ".storage", "campus");
+  if (configured) return path.resolve(configured);
+  if (process.env.VERCEL) return path.resolve("/tmp", "campus-storage");
+  return path.resolve(process.cwd(), ".storage", "campus");
 }
 
 function resolveAvatarPath(avatarKey: string): string {

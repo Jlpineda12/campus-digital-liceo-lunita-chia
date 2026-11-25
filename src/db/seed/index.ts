@@ -17,6 +17,7 @@ import { loadScriptEnv } from "../scripts/env";
 import { seedDemoAgenda } from "./agenda";
 import { seedDemoAttendance } from "./attendance";
 import { seedDemoAula } from "./aula";
+import { seedDemoFase4 } from "./fase4";
 import { seedDemoGrades } from "./grades";
 import { seedDemoLogros } from "./logros";
 import { seedDemoObserver } from "./observer";
@@ -53,13 +54,17 @@ function slug(text: string): string {
 }
 
 export async function runSeed(db: Database): Promise<void> {
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("El seed de demostración no puede ejecutarse en producción.");
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_DEMO_SEED !== "true") {
+    throw new Error(
+      "El seed de demostración está bloqueado en producción (solo se habilita en entornos demo con ALLOW_DEMO_SEED=true).",
+    );
   }
 
   const [existing] = await db.select({ total: count() }).from(users);
   if ((existing?.total ?? 0) > 0) {
-    console.log("ℹ La base de datos ya tiene usuarios. Usa `npm run db:reset` para recrearla.");
+    // Asegura datos idempotentes de Fase 4 (admisiones/cartera) si la base ya tenía usuarios.
+    await seedDemoFase4(db);
+    console.log("ℹ La base de datos ya tiene usuarios. Seed base omitido (Fase 4 verificada).");
     return;
   }
 
@@ -287,6 +292,7 @@ export async function runSeed(db: Database): Promise<void> {
   const reportCardCount = await seedDemoReportCards(db);
   const agendaCount = await seedDemoAgenda(db);
   const aulaCounts = await seedDemoAula(db);
+  const fase4Counts = await seedDemoFase4(db);
 
   console.log("✔ Seed institucional creado:");
   console.table({
@@ -309,6 +315,8 @@ export async function runSeed(db: Database): Promise<void> {
     "circulares agenda": agendaCount,
     "unidades aula virtual": aulaCounts.units,
     "tareas aula virtual": aulaCounts.activities,
+    "admisiones 2027 demo": fase4Counts.applications,
+    "cargos cartera demo": fase4Counts.charges,
   });
   console.log(
     "ℹ Cuentas demo por rol: ver src/modules/core/auth/demo.ts (contraseña: SEED_DEMO_PASSWORD).",

@@ -22,6 +22,8 @@ export const RESET_TOKEN_TTL_MS = 15 * 60 * 1000;
 function appBaseUrl(requestHost: string | null): string | null {
   const configured = process.env.APP_URL?.replace(/\/+$/, "");
   if (configured) return configured;
+  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  if (vercelHost) return `https://${vercelHost.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`;
   if (process.env.NODE_ENV === "production") return null;
   return `http://${isLocalHost(requestHost) && requestHost ? requestHost : "localhost:3000"}`;
 }

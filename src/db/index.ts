@@ -8,9 +8,6 @@ import { createDatabase, type Database } from "./client";
 const globalForDb = globalThis as unknown as { __lunitaDb?: Database };
 
 export const db: Database = globalForDb.__lunitaDb ?? createDatabase();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForDb.__lunitaDb = db;
-}
+globalForDb.__lunitaDb = db;
 
 export type { Database };
