@@ -3,14 +3,15 @@
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useId, useState } from "react";
+import { playLunita } from "@/components/brand/LunitaCharacter";
 import { cx } from "@/components/ui/cx";
 import { pillButtonClass } from "@/components/ui/PillButton";
 import { loginAction, type LoginState } from "@/modules/core/auth/actions";
 import type { LoginRoleParam } from "@/modules/core/auth/roles";
 
 /**
- * Pistas de acceso por tipo de usuario. Es solo ayuda visual: el Campus detecta
- * el rol real al validar la cuenta (no hay que elegirlo para ingresar).
+ * Pista del campo según `?rol=` (enlace desde el sitio web). Es solo ayuda: el
+ * Campus detecta el rol real al validar la cuenta.
  */
 const AUDIENCE_HINTS: Record<LoginRoleParam, { label: string; hint: string }> = {
   estudiantes: { label: "Estudiante", hint: "Tu número de documento (TI o RC) o tu correo del colegio." },
@@ -19,55 +20,23 @@ const AUDIENCE_HINTS: Record<LoginRoleParam, { label: string; hint: string }> = 
   directivos: { label: "Directivo", hint: "Tu cédula o tu correo institucional." },
 };
 
-const AUDIENCES = Object.keys(AUDIENCE_HINTS) as LoginRoleParam[];
+const GENERAL_HINT = "Tu número de documento o el correo registrado en el colegio.";
 const INITIAL_STATE: LoginState = { status: "idle" };
 
 interface LoginFormProps {
-  initialAudience: LoginRoleParam;
+  /** Del parámetro `?rol=`; sin él se muestra una pista general. */
+  initialAudience?: LoginRoleParam;
   next?: string;
   modulo?: string;
 }
 
 export function LoginForm({ initialAudience, next, modulo }: LoginFormProps) {
   const [state, formAction, pending] = useActionState(loginAction, INITIAL_STATE);
-  const [audience, setAudience] = useState<LoginRoleParam>(initialAudience);
   const [showPassword, setShowPassword] = useState(false);
-  const ids = { identifier: useId(), password: useId(), hint: useId(), legend: useId() };
+  const ids = { identifier: useId(), password: useId(), hint: useId() };
 
   return (
-    <form action={formAction} noValidate className="grid gap-5">
-      <fieldset aria-describedby={`${ids.legend}-note`}>
-        <legend id={ids.legend} className="field-label">
-          Ver indicaciones para
-        </legend>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {AUDIENCES.map((key) => (
-            <label
-              key={key}
-              className={cx(
-                "audience-option",
-                "cursor-pointer rounded-control border-2 border-line bg-white px-2 py-2 text-center text-sm font-extrabold text-muted transition-colors",
-                "hover:border-line-2 hover:text-navy",
-                "has-checked:border-sky has-checked:bg-sky-l has-checked:text-navy",
-                "has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-sky",
-              )}
-            >
-              <input
-                type="radio"
-                name="audiencia"
-                value={key}
-                checked={audience === key}
-                onChange={() => setAudience(key)}
-                className="sr-only"
-              />
-              {AUDIENCE_HINTS[key].label}
-            </label>
-          ))}
-        </div>
-        <p id={`${ids.legend}-note`} className="mt-2 text-xs font-semibold text-muted">
-          No necesitas elegir tu rol: el Campus lo reconoce al ingresar.
-        </p>
-      </fieldset>
+    <form action={formAction} onSubmit={() => playLunita("tap")} noValidate className="grid gap-5">
 
       <input type="hidden" name="next" value={next ?? ""} />
       <input type="hidden" name="modulo" value={modulo ?? ""} />
@@ -97,7 +66,7 @@ export function LoginForm({ initialAudience, next, modulo }: LoginFormProps) {
             state.fieldErrors?.identifier ? "text-red-solid" : "text-muted",
           )}
         >
-          {state.fieldErrors?.identifier ?? AUDIENCE_HINTS[audience].hint}
+          {state.fieldErrors?.identifier ?? (initialAudience ? AUDIENCE_HINTS[initialAudience].hint : GENERAL_HINT)}
         </p>
       </div>
 

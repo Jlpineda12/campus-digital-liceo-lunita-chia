@@ -1,29 +1,63 @@
 "use client";
 
-import { CornerDownLeft, Search } from "lucide-react";
+import { CornerDownLeft, History, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { cx } from "@/components/ui/cx";
-import { NAV_SECTION_LABELS, type ResolvedNavItem } from "@/modules/core/auth/navigation";
+import { parseList, useLocalPreference } from "@/components/ui/useLocalPreference";
+import type { ResolvedDestination, ResolvedNavItem } from "@/modules/core/auth/navigation";
 import { NavIcon } from "./NavIcon";
 
 function normalize(text: string): string {
   return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 }
 
+export interface RecentPage {
+  href: string;
+  title: string;
+  section: string;
+}
+
+export const recentKey = (userId: string) => `campus-lunita:recientes:${userId}`;
+
+export function isRecentPage(v: unknown): v is RecentPage {
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    typeof (v as RecentPage).href === "string" &&
+    typeof (v as RecentPage).title === "string" &&
+    typeof (v as RecentPage).section === "string"
+  );
+}
+
+interface PaletteEntry {
+  key: string;
+  href: string;
+  label: string;
+  section: string;
+  icon: ResolvedNavItem["icon"];
+  recent: boolean;
+}
+
 /**
- * Buscador global (Ctrl+K / ⌘K). Busca entre los módulos habilitados del rol;
- * luego se sumarán cursos, estudiantes y documentos (siempre filtrados en servidor).
+ * Buscador global (Ctrl+K / ⌘K): las páginas recientes de ESTE usuario (en este
+ * navegador) y todos los módulos del rol, rotulados con su destino del menú.
  */
 export function CommandPalette({
   open,
   onClose,
   items,
+  destinations,
+  userId,
 }: {
   open: boolean;
   onClose: () => void;
   items: ResolvedNavItem[];
+  destinations: ResolvedDestination[];
+  userId: string;
 }) {
+  const [rawRecent] = useLocalPreference(recentKey(userId));
+  const recent = parseList(rawRecent, isRecentPage);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -37,21 +71,30 @@ export function CommandPalette({
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
-  const results = useMemo(() => {
-    const q = normalize(query.trim());
-    // Solo módulos habilitados: así el teclado nunca cae en una opción inactiva.
-    return items.filter(
-      (item) =>
-        item.available &&
-        (!q ||
-          normalize(`${item.label} ${item.keywords ?? ""} ${NAV_SECTION_LABELS[item.section]}`).includes(q)),
-    );
-  }, [items, query]);
+  const destOf = (key: string) => destinations.find((d) => d.items.some((i) => i.key === key))?.label ?? "Campus";
+  const q = normalize(query.trim());
+  // Solo módulos habilitados: así el teclado nunca cae en una opción inactiva.
+  const modules: PaletteEntry[] = items
+    .filter((item) => item.available)
+    .filter((item) => !q || normalize(`${item.label} ${item.keywords ?? ""} ${destOf(item.key)}`).includes(q))
+    .map((item) => ({
+      key: item.key,
+      href: item.href,
+      label: item.label,
+      section: destOf(item.key),
+      icon: item.icon,
+      recent: false,
+    }));
+  const recents: PaletteEntry[] = recent
+    .filter((r) => !q || normalize(`${r.title} ${r.section}`).includes(q))
+    .slice(0, q ? 3 : 5)
+    .map((r) => ({ key: `r-${r.href}`, href: r.href, label: r.title, section: r.section, icon: "home", recent: true }));
+  const results = [...recents, ...modules.filter((m) => !recents.some((r) => r.href === m.href))];
 
   const activeIndex = Math.min(active, Math.max(results.length - 1, 0));
 
-  function choose(item: ResolvedNavItem | undefined) {
-    if (!item?.available) return;
+  function choose(item: PaletteEntry | undefined) {
+    if (!item) return;
     onClose();
     router.push(item.href);
   }
@@ -122,12 +165,12 @@ export function CommandPalette({
             )}
           >
             <span className="grid size-9 shrink-0 place-items-center rounded-icon-sm bg-cloud text-sky-solid">
-              <NavIcon name={item.icon} className="size-5" />
+              {item.recent ? <History className="size-5" aria-hidden /> : <NavIcon name={item.icon} className="size-5" />}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate font-extrabold text-navy">{item.label}</span>
               <span className="block text-xs font-bold tracking-wide text-muted uppercase">
-                {NAV_SECTION_LABELS[item.section]}
+                {item.recent ? `Reciente · ${item.section}` : item.section}
               </span>
             </span>
             {index === activeIndex && (

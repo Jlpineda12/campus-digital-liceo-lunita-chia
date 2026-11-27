@@ -18,7 +18,7 @@ import {
 import { DOCUMENT_TYPES } from "@/modules/core/academic-structure/constants";
 import { PAYMENT_CHANNELS } from "@/db/schema/matriculas";
 import { recordAudit } from "@/modules/core/audit/service";
-import { requireSession } from "@/modules/core/auth/guards";
+import { requirePermission, requireSession } from "@/modules/core/auth/guards";
 import { hashPassword } from "@/modules/core/auth/password";
 import { can } from "@/modules/core/auth/permissions";
 import { formText } from "@/modules/core/auth/schemas";
@@ -28,6 +28,15 @@ import {
   generateInstitutionalPassword,
 } from "@/modules/core/users/bulk";
 import { normalizeDocumentNumber } from "@/modules/core/users/schemas";
+import { todayInBogota } from "@/modules/core/academic-structure/queries";
+import {
+  earlyBirdAtSubmission,
+  earlyBirdOnPayment,
+  effectiveDiscounts,
+  type EarlyBirdStatus,
+  type SiblingClaimStatus,
+} from "./discount-policy";
+import { findLinkedActiveSibling, verifySiblingClaim, type SiblingCheck } from "./siblings";
 import { sanitizeAulaText } from "@/modules/aula/sanitize";
 import {
   ADMISSION_DOC_KEYS,
@@ -42,6 +51,8 @@ export interface AdmissionActionState {
   message?: string;
   trackingCode?: string;
   guardianDocNumber?: string;
+  /** Resultado de la verificación de descuentos al radicar. */
+  benefits?: { earlyBird: EarlyBirdStatus; sibling: SiblingClaimStatus };
   issuedCredentials?: Array<{ role: string; fullName: string; email: string; documentNumber: string; password: string }>;
 }
 
@@ -63,8 +74,9 @@ const createAdmissionSchema = z.object({
   guardianEmail: z.email({ error: "Ingresa un correo electrónico válido." }).trim().toLowerCase(),
   guardianPhone: z.string().trim().min(7, "Ingresa un teléfono de contacto válido.").max(25),
   address: z.string().trim().max(180).optional().default(""),
-  hasSiblingDiscount: z.boolean().default(false),
-  hasEarlyBirdDiscount: z.boolean().default(false),
+  /** La familia declara tener hijos en el colegio; el servidor lo verifica. */
+  claimsSibling: z.boolean().default(false),
+  siblingDocNumber: z.string().trim().max(25).optional().default(""),
   habeasDataAccepted: z.literal(true, {
     error: "Debes aceptar la Política de Tratamiento de Datos de Menores (Ley 1581).",
   }),
@@ -93,8 +105,8 @@ export async function createAdmissionApplicationAction(
     guardianEmail: formText(formData, "guardianEmail"),
     guardianPhone: formText(formData, "guardianPhone"),
     address: formText(formData, "address") ?? "",
-    hasSiblingDiscount: formData.get("hasSiblingDiscount") === "on",
-    hasEarlyBirdDiscount: formData.get("hasEarlyBirdDiscount") === "on",
+    claimsSibling: formData.get("claimsSibling") === "on",
+    siblingDocNumber: normalizeDocumentNumber(formText(formData, "siblingDocNumber") ?? ""),
     habeasDataAccepted: formData.get("habeasDataAccepted") === "on",
   });
 
@@ -113,13 +125,34 @@ export async function createAdmissionApplicationAction(
     return { status: "error", message: "El grado seleccionado no es válido." };
   }
 
-  const fees = calculateAdmissionFees({
-    levelCode: gradeRow.levelCode,
-    hasEarlyBirdDiscount: input.hasEarlyBirdDiscount,
-    hasSiblingDiscount: input.hasSiblingDiscount,
-  });
-
   const session = await getSession();
+
+  // Descuentos verificados en servidor (nunca autodeclarados).
+  const earlyBird = earlyBirdAtSubmission(todayInBogota());
+  let siblingCheck: SiblingCheck | null = null;
+  if (session?.user.role === "GUARDIAN") {
+    const [current] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.documentNumber, input.studentDocNumber))
+      .limit(1);
+    siblingCheck = await findLinkedActiveSibling(session.user.id, current?.id ?? null);
+  }
+  if (!siblingCheck && input.claimsSibling) {
+    if (input.siblingDocNumber.length < 5) {
+      return { status: "error", message: "Escribe el número de documento del hermano(a) que estudia en el Liceo." };
+    }
+    siblingCheck = await verifySiblingClaim({
+      guardianDocNumber: input.guardianDocNumber,
+      siblingDocNumber: input.siblingDocNumber,
+      studentDocNumber: input.studentDocNumber,
+      targetYear: 2027,
+    });
+  }
+  const siblingStatus: SiblingClaimStatus = siblingCheck?.status ?? "NOT_REQUESTED";
+  const discounts = effectiveDiscounts({ earlyBird, sibling: siblingStatus });
+  const fees = calculateAdmissionFees({ levelCode: gradeRow.levelCode, ...discounts });
+
   const { ip } = await getRequestMeta();
   const trackingCode = generateTrackingCode(2027);
   const birthDate = /^\d{4}-\d{2}-\d{2}$/.test(input.studentBirthDate) ? input.studentBirthDate : null;
@@ -156,8 +189,12 @@ export async function createAdmissionApplicationAction(
         guardianEmail: input.guardianEmail,
         guardianPhone: sanitizeAulaText(input.guardianPhone),
         address: sanitizeAulaText(input.address),
-        hasSiblingDiscount: input.hasSiblingDiscount,
-        hasEarlyBirdDiscount: input.hasEarlyBirdDiscount,
+        earlyBirdStatus: earlyBird,
+        siblingClaimStatus: siblingStatus,
+        siblingReferenceDoc: input.claimsSibling ? input.siblingDocNumber || null : null,
+        siblingVerificationNote: siblingCheck?.note ?? null,
+        hasSiblingDiscount: discounts.hasSiblingDiscount,
+        hasEarlyBirdDiscount: discounts.hasEarlyBirdDiscount,
         estimatedEnrollmentCop: fees.enrollmentFinal,
         estimatedMonthlyCop: fees.monthlyFinal,
         habeasDataAcceptedAt: new Date(),
@@ -197,6 +234,7 @@ export async function createAdmissionApplicationAction(
     message: `¡Solicitud radicada! Guarda tu código ${trackingCode} para subir los 8 documentos y consultar avances.`,
     trackingCode,
     guardianDocNumber: input.guardianDocNumber,
+    benefits: { earlyBird, sibling: siblingStatus },
   };
 }
 
@@ -292,8 +330,18 @@ export async function uploadAdmissionPaymentAction(
   }
 
   const [app] = await db
-    .select({ id: admissionApplications.id, status: admissionApplications.status, paymentReceiptKey: admissionApplications.paymentReceiptKey })
+    .select({
+      id: admissionApplications.id,
+      status: admissionApplications.status,
+      paymentReceiptKey: admissionApplications.paymentReceiptKey,
+      paymentReportedAt: admissionApplications.paymentReportedAt,
+      earlyBirdStatus: admissionApplications.earlyBirdStatus,
+      siblingClaimStatus: admissionApplications.siblingClaimStatus,
+      levelCode: levels.code,
+    })
     .from(admissionApplications)
+    .innerJoin(grades, eq(grades.id, admissionApplications.targetGradeId))
+    .innerJoin(levels, eq(levels.id, grades.levelId))
     .where(
       and(
         eq(admissionApplications.trackingCode, trackingCode),
@@ -314,12 +362,22 @@ export async function uploadAdmissionPaymentAction(
     receiptKey = stored.storageKey;
   }
 
+  // La PRIMERA fecha de reporte define el pronto pago (reenviar el soporte no la cambia).
+  const reportedAt = app.paymentReportedAt ?? new Date();
+  const earlyBird = earlyBirdOnPayment(app.earlyBirdStatus, todayInBogota(reportedAt));
+  const discounts = effectiveDiscounts({ earlyBird, sibling: app.siblingClaimStatus });
+  const fees = calculateAdmissionFees({ levelCode: app.levelCode, ...discounts });
   await db
     .update(admissionApplications)
     .set({
       paymentChannel: parsedChannel.data,
       paymentReference,
       paymentReceiptKey: receiptKey,
+      paymentReportedAt: reportedAt,
+      earlyBirdStatus: earlyBird,
+      ...discounts,
+      estimatedEnrollmentCop: fees.enrollmentFinal,
+      estimatedMonthlyCop: fees.monthlyFinal,
       status: "PAYMENT_REVIEW",
       updatedAt: new Date(),
     })
@@ -678,4 +736,62 @@ export async function formalizeAdmissionAction(
     }`,
     issuedCredentials,
   };
+}
+
+/**
+ * Secretaría aprueba o rechaza un descuento de hermanos que quedó en revisión.
+ * Recalcula el valor a pagar y deja registro en la auditoría.
+ */
+export async function reviewSiblingDiscountAction(formData: FormData): Promise<void> {
+  const actor = await requirePermission("enrollment.formalize");
+  const parsed = z
+    .object({ applicationId: z.uuid(), decision: z.enum(["VERIFIED", "REJECTED"]) })
+    .safeParse({ applicationId: formText(formData, "applicationId"), decision: formText(formData, "decision") });
+  if (!parsed.success) return;
+  const { applicationId, decision } = parsed.data;
+
+  const [app] = await db
+    .select({
+      earlyBirdStatus: admissionApplications.earlyBirdStatus,
+      siblingClaimStatus: admissionApplications.siblingClaimStatus,
+      status: admissionApplications.status,
+      levelCode: levels.code,
+    })
+    .from(admissionApplications)
+    .innerJoin(grades, eq(grades.id, admissionApplications.targetGradeId))
+    .innerJoin(levels, eq(levels.id, grades.levelId))
+    .where(eq(admissionApplications.id, applicationId))
+    .limit(1);
+  if (!app || app.status === "ENROLLED" || app.siblingClaimStatus === "NOT_REQUESTED") return;
+
+  const discounts = effectiveDiscounts({ earlyBird: app.earlyBirdStatus, sibling: decision });
+  const fees = calculateAdmissionFees({ levelCode: app.levelCode, ...discounts });
+  const { ip } = await getRequestMeta();
+  await db.transaction(async (tx) => {
+    await tx
+      .update(admissionApplications)
+      .set({
+        siblingClaimStatus: decision,
+        siblingReviewedBy: actor.id,
+        siblingReviewedAt: new Date(),
+        ...discounts,
+        estimatedEnrollmentCop: fees.enrollmentFinal,
+        estimatedMonthlyCop: fees.monthlyFinal,
+        updatedAt: new Date(),
+      })
+      .where(eq(admissionApplications.id, applicationId));
+    await recordAudit(
+      {
+        actorUserId: actor.id,
+        action: "ADMISSION_DISCOUNT_REVIEWED",
+        entityType: "admission_application",
+        entityId: applicationId,
+        before: { sibling: app.siblingClaimStatus },
+        after: { sibling: decision, monthlyCop: fees.monthlyFinal },
+        ipAddress: ip,
+      },
+      tx,
+    );
+  });
+  refresh();
 }

@@ -1,3 +1,4 @@
+import { LunitaCharacter } from "@/components/brand/LunitaCharacter";
 import type { PlatformSpaceKey } from "@/modules/core/brand/config";
 
 /**
@@ -63,68 +64,11 @@ export function PlatformLogo({
   }
 
   if (space === "aula") {
+    // Órbita Virtual usa como logo a Lunita, el personaje del colegio (modo compacto).
     return (
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 64 64"
-        fill="none"
-        role={title ? "img" : undefined}
-        aria-hidden={title ? undefined : true}
-        className={className}
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {title && <title>{title}</title>}
-        {/* Base táctil 3D morado cósmico (--purple / --purple-d) */}
-        <rect x="2" y="6" width="60" height="56" rx="18" fill="#8D4CC0" />
-        <rect x="2" y="2" width="60" height="55" rx="18" fill="#B565F5" />
-        {/* Brillo superior tipo Duolingo */}
-        <path d="M12 10.5C15.5 7.8 21.5 7 29 7H35" stroke="#E5BEFF" strokeWidth="3.5" strokeLinecap="round" />
-
-        {/* Destello estrellado amarillo */}
-        <path d="M14 14L15.6 17.4L19 19L15.6 20.6L14 24L12.4 20.6L9 19L12.4 17.4Z" fill="#FFC800" />
-        <circle cx="51" cy="45" r="2.2" fill="#FFF4C2" />
-
-        {/* Mitad trasera del anillo orbital */}
-        <path
-          d="M11 39.5C8.5 34.2 16 25.5 28 20.5C40 15.5 51.5 15.6 54 21"
-          stroke="#7A36B1"
-          strokeWidth="5"
-          strokeLinecap="round"
-        />
-
-        {/* Planeta Luna 3D amarillo Lunita */}
-        <circle cx="32" cy="32.5" r="13.5" fill="#E5A400" />
-        <circle cx="32" cy="29.8" r="13.5" fill="#FFC800" />
-        {/* Cráteres simpáticos + brillo */}
-        <circle cx="26.5" cy="25.5" r="3.2" fill="#FFE875" />
-        <circle cx="36.5" cy="33.5" r="2.6" fill="#E5A400" fillOpacity="0.55" />
-        <circle cx="27.5" cy="34.5" r="1.7" fill="#E5A400" fillOpacity="0.45" />
-        <path d="M24 20.8C26.5 19.1 29.5 18.4 33 18.6" stroke="#FFF4C2" strokeWidth="2.6" strokeLinecap="round" />
-
-        {/* Mitad delantera del anillo orbital (grueso y vibrante) */}
-        <path
-          d="M54 21C56.5 26.4 49 35.1 37 40.1C25 45.1 13.5 45 11 39.5"
-          stroke="#1CB0F6"
-          strokeWidth="5.2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M52.5 23.4C50.5 28.2 44.3 33.8 36 37.3C27 41.1 18.5 42.2 13.8 40.4"
-          stroke="#7CE0FF"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-
-        {/* Mini planetas STHEAMI con volumen 3D */}
-        <circle cx="51.5" cy="21" r="5" fill="#46A302" />
-        <circle cx="51.5" cy="19.5" r="5" fill="#58CC02" />
-        <circle cx="50" cy="18" r="1.4" fill="#B6F87E" />
-
-        <circle cx="15" cy="41.5" r="4" fill="#D9468F" />
-        <circle cx="15" cy="40.3" r="4" fill="#FF86D0" />
-        <circle cx="13.8" cy="39.1" r="1.1" fill="#FFD1EE" />
-      </svg>
+      <span className={className} title={title} style={{ display: "inline-flex", height: size }}>
+        <LunitaCharacter compact size={size} intro={false} track={false} decorative />
+      </span>
     );
   }
 

@@ -1,4 +1,4 @@
-import { FlaskConical } from "lucide-react";
+import { ChevronDown, FlaskConical } from "lucide-react";
 import { cx } from "@/components/ui/cx";
 import { demoLoginAction } from "@/modules/core/auth/actions";
 import { ROLE_META, ROLES } from "@/modules/core/auth/roles";
@@ -20,16 +20,19 @@ interface DemoAccessProps {
   modulo?: string;
 }
 
-/** Accesos rápidos por rol con cuentas semilla. Solo se renderiza fuera de producción. */
+/**
+ * Accesos rápidos por rol con cuentas semilla (solo desarrollo y host local).
+ * Plegado por defecto para no recargar la pantalla de ingreso.
+ */
 export function DemoAccess({ hints, next, modulo }: DemoAccessProps) {
   return (
-    <section aria-labelledby="demo-title" className="mt-6 border-t-2 border-dashed border-line pt-5">
-      <h2 id="demo-title" className="flex items-center gap-2 text-sm font-extrabold tracking-wide text-navy uppercase">
-        <FlaskConical className="size-4 text-purple-d" aria-hidden />
-        Acceso de demostración
-      </h2>
-      <p className="mt-1 text-sm text-muted">Entra con una cuenta semilla para probar cada rol.</p>
-      <div className="mt-3 grid gap-2.5">
+    <details className="group mt-5 border-t border-dashed border-line pt-4">
+      <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-bold text-muted hover:text-navy">
+        <FlaskConical className="size-4 text-purple-solid" aria-hidden />
+        Probar con una cuenta de demostración
+        <ChevronDown className="ml-auto size-4 transition-transform duration-200 group-open:rotate-180" aria-hidden />
+      </summary>
+      <div className="mt-3 grid gap-2">
         {ROLES.map((role) => (
           <form key={role} action={demoLoginAction}>
             <input type="hidden" name="role" value={role} />
@@ -47,6 +50,6 @@ export function DemoAccess({ hints, next, modulo }: DemoAccessProps) {
           </form>
         ))}
       </div>
-    </section>
+    </details>
   );
 }

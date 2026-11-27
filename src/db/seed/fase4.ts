@@ -39,8 +39,9 @@ export async function seedDemoFase4(db: Database): Promise<{ applications: numbe
 
     if (gPrimero && gOctavo && gPrejardin) {
       const f1 = calculateAdmissionFees({ levelCode: gPrimero.levelCode, hasEarlyBirdDiscount: true });
-      const f2 = calculateAdmissionFees({ levelCode: gOctavo.levelCode, hasEarlyBirdDiscount: true, hasSiblingDiscount: true });
-      const f3 = calculateAdmissionFees({ levelCode: gPrejardin.levelCode });
+      // Hermanos de DEMO02 queda EN REVISIÓN (descuento aún no aplicado) para mostrar el flujo de Secretaría.
+      const f2 = calculateAdmissionFees({ levelCode: gOctavo.levelCode, hasEarlyBirdDiscount: true });
+      const f3 = calculateAdmissionFees({ levelCode: gPrejardin.levelCode, hasEarlyBirdDiscount: true });
 
       const demoApps = [
         {
@@ -65,6 +66,7 @@ export async function seedDemoFase4(db: Database): Promise<{ applications: numbe
           address: "Vereda Fonquetá, Chía",
           hasEarlyBirdDiscount: true,
           hasSiblingDiscount: false,
+          earlyBirdStatus: "ELIGIBLE" as const,
           estimatedEnrollmentCop: f1.enrollmentFinal,
           estimatedMonthlyCop: f1.monthlyFinal,
           habeasDataAcceptedAt: new Date(),
@@ -91,7 +93,11 @@ export async function seedDemoFase4(db: Database): Promise<{ applications: numbe
           guardianPhone: "3157729012",
           address: "Barrio Santa Lucía, Chía",
           hasEarlyBirdDiscount: true,
-          hasSiblingDiscount: true,
+          hasSiblingDiscount: false,
+          earlyBirdStatus: "ELIGIBLE" as const,
+          siblingClaimStatus: "PENDING_REVIEW" as const,
+          siblingReferenceDoc: "1072345678",
+          siblingVerificationNote: "Sin coincidencia automática (otro acudiente registrado o documento distinto). Verificar con el Registro Civil.",
           estimatedEnrollmentCop: f2.enrollmentFinal,
           estimatedMonthlyCop: f2.monthlyFinal,
           habeasDataAcceptedAt: new Date(),
@@ -119,8 +125,9 @@ export async function seedDemoFase4(db: Database): Promise<{ applications: numbe
           guardianEmail: "paula.rojas@correo.test",
           guardianPhone: "3209184455",
           address: "Cajicá - Chía",
-          hasEarlyBirdDiscount: false,
+          hasEarlyBirdDiscount: true,
           hasSiblingDiscount: false,
+          earlyBirdStatus: "ELIGIBLE" as const,
           estimatedEnrollmentCop: f3.enrollmentFinal,
           estimatedMonthlyCop: f3.monthlyFinal,
           habeasDataAcceptedAt: new Date(),

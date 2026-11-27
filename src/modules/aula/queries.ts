@@ -38,8 +38,12 @@ export interface AulaCourseCard {
   pillar: StheamiPillar;
   groupName: string;
   gradeName: string;
+  /** Orden del grado (Prejardín → Undécimo) para agrupar listas largas. */
+  gradeOrder: number;
   teacherName: string | null;
   theme: CourseThemeConfig;
+  /** El docente ya guardó una portada/estilo propio para el curso. */
+  isCustomized: boolean;
   unitCount: number;
   resourceCount: number;
   viewedResourceCount: number;
@@ -291,8 +295,10 @@ export async function listAulaCoursesForActor(
     pillar: c.pillar,
     groupName: c.groupName,
     gradeName: c.gradeName,
+    gradeOrder: c.gradeOrder,
     teacherName: c.teacherFirst ? `${c.teacherFirst} ${c.teacherLast}` : null,
     theme: themeMap.get(c.courseAssignmentId) ?? normalizeCourseTheme(null),
+    isCustomized: themeMap.has(c.courseAssignmentId),
     unitCount: unitsMap.get(c.courseAssignmentId) ?? 0,
     resourceCount: resourcesMap.get(c.courseAssignmentId) ?? 0,
     viewedResourceCount: viewedMap.get(c.courseAssignmentId) ?? 0,

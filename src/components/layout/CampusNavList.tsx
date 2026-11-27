@@ -3,93 +3,93 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  NAV_SECTION_LABELS,
-  type NavSection,
-  type ResolvedNavItem,
+  findActiveDestination,
+  findActiveItem,
+  type ResolvedDestination,
 } from "@/modules/core/auth/navigation";
 import { NavIcon } from "./NavIcon";
 
-const SECTION_ORDER: NavSection[] = ["inicio", "aula", "siga", "admin"];
-
-export type CampusZoneFilter = "all" | "aula" | "siga" | "admin";
-
-export function isActivePath(pathname: string, href: string): boolean {
-  if (pathname === href) return true;
-  if (href === "/aula" && (pathname === "/aula/tareas" || pathname.startsWith("/aula/tareas/"))) {
-    return false;
-  }
-  return pathname.startsWith(`${href}/`);
+export function destinationBadge(dest: ResolvedDestination, badges: Record<string, number>): number {
+  return dest.items.reduce((sum, item) => sum + (badges[item.key] ?? 0), 0);
 }
 
-/** Lista de navegación por secciones con soporte de enfoque por zona (Órbita Virtual vs SIGA). */
+function Count({ value, inverted }: { value: number; inverted?: boolean }) {
+  if (value <= 0) return null;
+  return (
+    <span
+      className={`ml-auto grid min-w-5.5 place-items-center rounded-pill px-1.5 py-0.5 text-[0.68rem] leading-none font-black tabular-nums ${
+        inverted ? "bg-navy text-yellow" : "bg-yellow text-navy"
+      }`}
+    >
+      {value > 99 ? "99+" : value}
+    </span>
+  );
+}
+
+/**
+ * Navegación de 4 destinos. El destino activo despliega sus secciones debajo
+ * (y como pestañas sobre el contenido), así el estudiante siempre sabe dónde está
+ * y todas las funciones siguen a un clic. `expandAll` muestra todo (menú móvil).
+ */
 export function CampusNavList({
-  items,
+  destinations,
   badges = {},
-  activeZone = "all",
+  expandAll = false,
   onNavigate,
 }: {
-  items: ResolvedNavItem[];
+  destinations: ResolvedDestination[];
   badges?: Record<string, number>;
-  activeZone?: CampusZoneFilter;
+  expandAll?: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-
-  const sectionsToRender =
-    activeZone === "all"
-      ? SECTION_ORDER
-      : (["inicio", activeZone] as NavSection[]);
+  const activeDest = findActiveDestination(destinations, pathname);
+  const activeItem = findActiveItem(
+    destinations.flatMap((d) => d.items),
+    pathname,
+  );
 
   return (
-    <nav aria-label="Navegación del Campus" className="grid gap-4">
-      {sectionsToRender.map((section) => {
-        const sectionItems = items.filter((i) => i.section === section && i.available);
-        if (sectionItems.length === 0) return null;
-        return (
-          <div key={section}>
-            {section !== "inicio" && (
-              <p className="mb-1.5 flex items-center justify-between px-3 text-[0.68rem] font-extrabold tracking-widest text-white/85 uppercase">
-                <span>{NAV_SECTION_LABELS[section]}</span>
-                {activeZone !== "all" && (
-                  <span className="rounded-pill bg-white/18 px-2 py-0.5 text-[0.6rem] font-bold tracking-normal text-yellow normal-case">
-                    Zona activa
-                  </span>
-                )}
-              </p>
-            )}
-            <ul className="grid gap-1">
-              {sectionItems.map((item) => {
-                const count = badges[item.key] ?? 0;
-                const active = isActivePath(pathname, item.href);
-                return (
-                  <li key={item.key}>
-                    <Link
-                      href={item.href}
-                      className="nav-item"
-                      aria-current={active ? "page" : undefined}
-                      onClick={onNavigate}
-                    >
-                      <NavIcon name={item.icon} />
-                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                      {count > 0 && (
-                        <span
-                          className={`ml-auto grid min-w-5.5 place-items-center rounded-pill px-1.5 py-0.5 text-[0.68rem] leading-none font-black tabular-nums ${
-                            active
-                              ? "bg-navy text-yellow"
-                              : "bg-yellow text-navy"
-                          }`}
-                        >
-                          {count > 99 ? "99+" : count}
-                        </span>
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        );
-      })}
+    <nav aria-label="Navegación del Campus">
+      <ul className="grid gap-1.5">
+        {destinations.map((dest) => {
+          const isActive = dest.key === activeDest?.key;
+          const showChildren = dest.items.length > 1 && (isActive || expandAll);
+          const singleAndCurrent = dest.items.length === 1 && activeItem?.href === dest.href;
+          return (
+            <li key={dest.key}>
+              <Link
+                href={dest.href}
+                className="nav-item"
+                aria-current={singleAndCurrent ? "page" : isActive ? "true" : undefined}
+                onClick={onNavigate}
+              >
+                <NavIcon name={dest.icon} />
+                <span className="min-w-0 flex-1 truncate">{dest.label}</span>
+                <Count value={destinationBadge(dest, badges)} inverted={isActive} />
+              </Link>
+
+              {showChildren && (
+                <ul className="nav-sublist" aria-label={`Secciones de ${dest.label}`}>
+                  {dest.items.map((item) => (
+                    <li key={item.key}>
+                      <Link
+                        href={item.href}
+                        className="nav-subitem"
+                        aria-current={item.key === activeItem?.key ? "page" : undefined}
+                        onClick={onNavigate}
+                      >
+                        <span className="min-w-0 flex-1 truncate">{item.short}</span>
+                        <Count value={badges[item.key] ?? 0} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </nav>
   );
 }

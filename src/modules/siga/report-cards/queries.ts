@@ -30,6 +30,12 @@ import {
   type PerformanceLevel,
   type SieeScale,
 } from "@/modules/siga/siee-grades/scale";
+import {
+  buildAnnualSummary,
+  type AnnualPeriodInput,
+  type AnnualSummary,
+  type PeriodSubjectFinal,
+} from "./annual-summary";
 import { renderQrSvg } from "./qr";
 import {
   canFamilyViewReportCard,
@@ -426,4 +432,61 @@ export async function verifyPublicCode(
   }
 
   return { status: "not_found" };
+}
+
+/**
+ * Boletín final del año de un estudiante. Quien llama debe haber verificado
+ * `canAccessStudent`. Con `familyView`, solo cuentan los periodos que Rectoría
+ * ya habilitó (misma regla de los boletines por periodo).
+ */
+export async function getStudentAnnualReport(options: {
+  enrollmentId: string;
+  groupId: string;
+  academicYearId: string;
+  periods: ReadonlyArray<{ id: string; number: number; name: string; weightPercent: number }>;
+  familyView: boolean;
+}): Promise<AnnualSummary> {
+  const { enrollmentId, groupId, academicYearId, periods, familyView } = options;
+  const [scale, issued] = await Promise.all([
+    getScaleForYear(academicYearId),
+    familyView ? listIssuedPeriodIdsForStudent(enrollmentId) : Promise.resolve(null),
+  ]);
+  const inputs: AnnualPeriodInput[] = periods.map((p) => ({ ...p, included: issued ? issued.has(p.id) : true }));
+  const perPeriodRows = await Promise.all(
+    inputs.map(async (p) =>
+      p.included ? ([p.id, await getStudentPeriodGrades({ enrollmentId, groupId, periodId: p.id, scale })] as const) : null,
+    ),
+  );
+  const perPeriod = new Map<string, PeriodSubjectFinal[]>();
+  for (const entry of perPeriodRows) {
+    if (!entry) continue;
+    const [periodId, subjects] = entry;
+    perPeriod.set(
+      periodId,
+      subjects.map((s) => ({
+        courseAssignmentId: s.courseAssignmentId,
+        subjectName: s.subjectName,
+        pillar: s.pillar,
+        final: s.result.final,
+      })),
+    );
+  }
+  return buildAnnualSummary(inputs, perPeriod, scale);
+}
+
+/** Lista liviana de estudiantes activos de un grupo (para elegir a quién consultar). */
+export async function listGroupRoster(groupId: string, academicYearId: string) {
+  const rows = await db
+    .select({ enrollmentId: enrollments.id, firstName: users.firstName, lastName: users.lastName })
+    .from(enrollments)
+    .innerJoin(users, eq(users.id, enrollments.studentId))
+    .where(
+      and(
+        eq(enrollments.groupId, groupId),
+        eq(enrollments.academicYearId, academicYearId),
+        eq(enrollments.status, "ACTIVE"),
+      ),
+    )
+    .orderBy(asc(users.lastName), asc(users.firstName));
+  return rows.map((r) => ({ enrollmentId: r.enrollmentId, studentName: `${r.lastName} ${r.firstName}` }));
 }

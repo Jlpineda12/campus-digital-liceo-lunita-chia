@@ -154,5 +154,32 @@ export function NavIcon({ name, className }: { name: NavIconName; className?: st
           <path d="M7.5 9.5h8.8l-2.3-2.3M16.5 14.5H7.7l2.3 2.3" />
         </svg>
       );
+
+    case "badges":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="9" r="5.5" fill="currentColor" fillOpacity="0.16" />
+          <path d="m12 6.4.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2L9.1 8.5l2-.3.9-1.8Z" />
+          <path d="m8.6 13.4-1.6 7.1 5-2.6 5 2.6-1.6-7.1" />
+        </svg>
+      );
+
+    case "courseReview":
+      return (
+        <svg {...common}>
+          <rect x="3.5" y="4" width="17" height="16" rx="2.5" fill="currentColor" fillOpacity="0.14" />
+          <path d="M7.5 9h4M7.5 13h3M7.5 17h2" />
+          <path d="m14 12.5 1.8 1.8 3.2-3.4" />
+        </svg>
+      );
+
+    case "finalReport":
+      return (
+        <svg {...common}>
+          <path d="M6.5 3.5h11A1.5 1.5 0 0 1 19 5v15a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5a1.5 1.5 0 0 1 1.5-1.5Z" fill="currentColor" fillOpacity="0.15" />
+          <path d="M8.5 8h7M8.5 11.5h4" />
+          <path d="m10 16.5 1.6 1.6 3.4-3.6" />
+        </svg>
+      );
   }
 }

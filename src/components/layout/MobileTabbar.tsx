@@ -1,68 +1,55 @@
 "use client";
 
-import { Menu, Search } from "lucide-react";
+import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { CSSProperties } from "react";
-import type { ResolvedNavItem } from "@/modules/core/auth/navigation";
-import { isActivePath } from "./CampusNavList";
+import { findActiveDestination, type ResolvedDestination } from "@/modules/core/auth/navigation";
+import { destinationBadge } from "./CampusNavList";
 import { NavIcon } from "./NavIcon";
 
-const SHORT_LABELS: Record<string, string> = {
-  dashboard: "Inicio",
-  courses: "Cursos",
-  tasks: "Tareas",
-  grades: "Notas",
-  attendance: "Asistencia",
-  billing: "Pagos",
-  observer: "Observador",
-  structure: "Estructura",
-  users: "Usuarios",
-  enrollment: "Matrículas",
-};
-
 /**
- * Barra de navegación inferior para móvil (`.tabbar` del sitio Astro).
- * Solo muestra módulos disponibles; el resto vive en el menú completo.
+ * Barra inferior móvil: los mismos 4 destinos de la barra lateral + Menú
+ * (secciones, búsqueda y perfil). Igual en todos los tamaños: nadie se pierde.
  */
 export function MobileTabbar({
-  navigation,
-  tabKeys,
-  onSearch,
+  destinations,
+  badges = {},
   onMenu,
 }: {
-  navigation: ResolvedNavItem[];
-  tabKeys: readonly string[];
-  onSearch: () => void;
+  destinations: ResolvedDestination[];
+  badges?: Record<string, number>;
   onMenu: () => void;
 }) {
   const pathname = usePathname();
-  const tabs = ["dashboard", ...tabKeys]
-    .map((key) => navigation.find((item) => item.key === key && item.available))
-    .filter((item): item is ResolvedNavItem => Boolean(item))
-    .slice(0, 3);
+  const active = findActiveDestination(destinations, pathname);
 
   return (
     <nav
-      aria-label="Accesos rápidos"
+      aria-label="Destinos principales"
       className="tabbar lg:hidden"
-      style={{ "--tabs": tabs.length + 2 } as CSSProperties}
+      style={{ "--tabs": destinations.length + 1 } as CSSProperties}
     >
-      {tabs.map((item) => (
-        <Link
-          key={item.key}
-          href={item.href}
-          className="tabbar-item"
-          aria-current={isActivePath(pathname, item.href) ? "page" : undefined}
-        >
-          <NavIcon name={item.icon} />
-          {SHORT_LABELS[item.key] ?? item.label}
-        </Link>
-      ))}
-      <button type="button" className="tabbar-item" onClick={onSearch}>
-        <Search aria-hidden />
-        Buscar
-      </button>
+      {destinations.map((dest) => {
+        const count = destinationBadge(dest, badges);
+        return (
+          <Link
+            key={dest.key}
+            href={dest.href}
+            className="tabbar-item relative"
+            aria-current={dest.key === active?.key ? "page" : undefined}
+          >
+            <NavIcon name={dest.icon} />
+            {dest.label}
+            {count > 0 && (
+              <span className="absolute top-0.5 left-[calc(50%+6px)] grid min-w-4.5 place-items-center rounded-pill bg-yellow px-1 text-[0.6rem] leading-4 font-black text-navy">
+                {count > 9 ? "9+" : count}
+                <span className="sr-only"> pendientes</span>
+              </span>
+            )}
+          </Link>
+        );
+      })}
       <button type="button" className="tabbar-item" onClick={onMenu} aria-haspopup="dialog">
         <Menu aria-hidden />
         Menú

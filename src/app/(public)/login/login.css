@@ -1,0 +1,233 @@
+/* Login "Noche en Chía": cielo, cerros, Lunita que se eleva y tarjeta de vidrio. */
+.login-scene {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  overflow: hidden;
+  color: #fff;
+}
+.login-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100dvh;
+  width: min(100% - 2.5rem, 72rem);
+  margin-inline: auto;
+  padding-block: 1.25rem;
+}
+
+.login-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.login-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #fff;
+  text-decoration: none;
+}
+.login-brand small {
+  display: block;
+  color: var(--yellow);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.login-brand strong {
+  display: block;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+.login-enroll {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 0.2s,
+    transform 0.2s var(--ease);
+}
+.login-enroll:hover {
+  background: rgb(255 255 255 / 0.2);
+  transform: translateY(-1px);
+}
+.login-enroll svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s var(--ease);
+}
+.login-enroll:hover svg {
+  transform: translateX(3px);
+}
+
+.login-main {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1.75rem;
+  padding-block: 1.5rem;
+}
+@media (width >= 64rem) {
+  .login-main {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);
+    align-items: center;
+    justify-items: stretch;
+    gap: 4rem;
+  }
+}
+
+.login-hero {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+@media (width >= 64rem) {
+  .login-hero {
+    justify-items: start;
+    text-align: left;
+  }
+}
+.login-lunita {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.login-lunita::before {
+  content: "";
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  inset: -18%;
+  background: radial-gradient(circle, rgb(255 220 120 / 0.45), rgb(255 200 0 / 0.12) 45%, transparent 70%);
+  filter: blur(10px);
+  animation: login-glow 1.8s var(--ease) 0.5s both;
+}
+/* Lunita se eleva detrás de los cerros mientras se dibuja */
+.login-lunita .lunita {
+  animation: login-moonrise 1.6s var(--ease) 0.25s both;
+}
+.login-title {
+  margin-top: 0.75rem;
+  max-width: 16ch;
+  color: #fff;
+  font-size: clamp(2.1rem, 1.5rem + 2.6vw, 3.6rem);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+}
+.login-pill {
+  display: inline-block;
+  margin-top: 0.12em;
+  padding: 0 0.24em 0.04em;
+  border-radius: 0.24em;
+  background: var(--yellow);
+  box-shadow: 0 0.09em 0 var(--yellow-d);
+  color: var(--navy);
+  rotate: -2deg;
+  animation: login-pill 0.7s var(--spring) 1s both;
+}
+.login-lead {
+  margin-top: 0.9rem;
+  max-width: 36ch;
+  color: rgb(255 255 255 / 0.82);
+  font-size: var(--step-1);
+  line-height: 1.45;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 27rem;
+  padding: clamp(1.4rem, 3vw, 2rem);
+  border-radius: 28px;
+  background: rgb(255 255 255 / 0.96);
+  color: var(--ink-2);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.4),
+    0 40px 80px -30px rgb(0 0 0 / 0.6),
+    0 0 60px -10px rgb(206 130 255 / 0.25);
+  backdrop-filter: blur(10px);
+  animation: login-card 0.85s var(--spring) 0.35s both;
+}
+.login-card h2 {
+  color: var(--navy);
+  font-size: var(--step-2);
+}
+
+.login-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: rgb(255 255 255 / 0.75);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+.login-footer svg {
+  width: 15px;
+  height: 15px;
+  color: var(--green);
+}
+
+/* Entrada escalonada */
+.login-rise {
+  animation: login-rise 0.7s var(--ease) both;
+  animation-delay: calc(0.55s + var(--d, 0) * 0.14s);
+}
+.login-fade {
+  animation: login-fade 0.8s var(--ease) both;
+  animation-delay: var(--d, 0.15s);
+}
+
+@keyframes login-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+@keyframes login-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes login-card {
+  from {
+    opacity: 0;
+    transform: translateY(32px) scale(0.97);
+  }
+}
+@keyframes login-pill {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-8deg);
+  }
+}
+@keyframes login-moonrise {
+  from {
+    opacity: 0;
+    transform: translateY(120px) scale(0.92);
+  }
+}
+@keyframes login-glow {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}

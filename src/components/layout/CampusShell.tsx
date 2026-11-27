@@ -4,13 +4,15 @@ import { ChevronLeft, Menu, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
-import { LunitaEmblem } from "@/components/ui/LunitaEmblem";
-import { PlatformLogo } from "@/components/ui/PlatformLogo";
+import { LunitaMark } from "@/components/brand/LunitaMark";
 import { ToastViewport } from "@/components/ui/ToastViewport";
+import { parseList } from "@/components/ui/useLocalPreference";
+import { findActiveDestination } from "@/modules/core/auth/navigation";
 import type { CampusShellData } from "@/modules/core/dashboard/shell";
-import { CampusNavList, type CampusZoneFilter } from "./CampusNavList";
+import { CampusNavList } from "./CampusNavList";
 import { ChildSwitcher } from "./ChildSwitcher";
-import { CommandPalette } from "./CommandPalette";
+import { CommandPalette, isRecentPage, recentKey } from "./CommandPalette";
+import { DestinationTabs } from "./DestinationTabs";
 import { MobileMenu } from "./MobileMenu";
 import { MobileTabbar } from "./MobileTabbar";
 import { NotificationsBell } from "./NotificationsBell";
@@ -30,7 +32,7 @@ function useShortcutLabel(): string {
   );
 }
 
-function detectZoneFromPath(pathname: string): CampusZoneFilter {
+function detectZoneFromPath(pathname: string): "all" | "aula" | "siga" | "admin" {
   if (pathname.startsWith("/aula")) return "aula";
   if (pathname.startsWith("/siga")) return "siga";
   if (pathname.startsWith("/admin")) return "admin";
@@ -38,11 +40,11 @@ function detectZoneFromPath(pathname: string): CampusZoneFilter {
 }
 
 /**
- * Marco insignia Liceo Lunita × VENTES:
- * - Selector Dual de Espacios en la barra lateral (**Órbita Virtual ⇄ SIGA Lunita** o **SIGA ⇄ Admin**),
- *   sincronizado automáticamente con la ruta y el degradado cósmico de la barra.
- * - Tirador flotante orgánico sobre el borde divisor (sin botones rígidos en la topbar) + atajo `Ctrl/⌘ + B`
- *   con animación spring (`380ms cubic-bezier(0.22, 1, 0.36, 1)`) que expande el lienzo al 100%.
+ * Marco del Campus:
+ * - Navegación de 4 destinos por rol; el destino activo despliega sus secciones
+ *   en la barra y como pestañas sobre el contenido (`DestinationTabs`).
+ * - Lunita es el logo en todas las zonas; la zona solo cambia el degradado.
+ * - Barra lateral plegable con `Ctrl/⌘ + B` y buscador `Ctrl/⌘ + K`.
  */
 export function CampusShell({ shell, children }: { shell: CampusShellData; children: ReactNode }) {
   const pathname = usePathname();
@@ -51,19 +53,30 @@ export function CampusShell({ shell, children }: { shell: CampusShellData; child
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Zona manual elegida en el selector del sidebar (se resetea suavemente si el usuario navega a otra zona)
-  const routeZone = detectZoneFromPath(pathname);
-  const [manualZoneOverride, setManualZoneOverride] = useState<{
-    path: string;
-    zone: CampusZoneFilter;
-  } | null>(null);
-
-  const activeZone: CampusZoneFilter =
-    manualZoneOverride && manualZoneOverride.path === pathname
-      ? manualZoneOverride.zone
-      : routeZone;
+  // La zona solo tiñe el degradado de la barra (Órbita/SIGA/Admin); la navegación es por destinos.
+  const activeZone = detectZoneFromPath(pathname);
 
   const shortcut = useShortcutLabel();
+
+  // «Recientes» del buscador: se guardan por usuario en este navegador (solo ruta y título visible).
+  useEffect(() => {
+    if (pathname === "/dashboard") return;
+    const timer = window.setTimeout(() => {
+      const title =
+        document.querySelector("main h1")?.textContent?.trim() || document.title.split(" · ")[0]?.trim() || "";
+      const section = findActiveDestination(shell.destinations, pathname)?.label;
+      if (!title || !section) return;
+      try {
+        const key = recentKey(shell.user.id);
+        const prev = parseList(window.localStorage.getItem(key), isRecentPage).filter((r) => r.href !== pathname);
+        window.localStorage.setItem(key, JSON.stringify([{ href: pathname, title: title.slice(0, 80), section }, ...prev].slice(0, 8)));
+        window.dispatchEvent(new Event("campus-lunita:preference"));
+      } catch {
+        // Sin almacenamiento: el buscador simplemente no muestra recientes.
+      }
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [pathname, shell.destinations, shell.user.id]);
 
   useEffect(() => {
     try {
@@ -112,31 +125,11 @@ export function CampusShell({ shell, children }: { shell: CampusShellData; child
   }, [openPalette, toggleSidebar]);
 
   const isGuardian = shell.user.role === "GUARDIAN";
-  const hasAula = shell.navigation.some((i) => i.section === "aula" && i.available);
-  const hasAdmin = shell.navigation.some((i) => i.section === "admin" && i.available);
+  const isFamilyRole = isGuardian || shell.user.role === "STUDENT";
   const sidebarPending =
     shell.user.role === "TEACHER"
       ? (shell.navBadges.courses ?? 0)
       : (shell.navBadges.tasks ?? 0);
-
-  // Opciones del conmutador de zona en la barra izquierda
-  const zoneTabs: Array<{
-    key: CampusZoneFilter;
-    label: string;
-    logo?: "aula" | "siga" | "admin";
-  }> = hasAula
-    ? [
-        { key: "aula", label: "Órbita", logo: "aula" },
-        { key: "siga", label: "SIGA", logo: "siga" },
-        { key: "all", label: "Todo" },
-      ]
-    : hasAdmin
-      ? [
-          { key: "siga", label: "SIGA", logo: "siga" },
-          { key: "admin", label: "Admin", logo: "admin" },
-          { key: "all", label: "Todo" },
-        ]
-      : [];
 
   return (
     <div
@@ -150,7 +143,7 @@ export function CampusShell({ shell, children }: { shell: CampusShellData; child
         Saltar al contenido
       </a>
 
-      {/* Barra lateral izquierda con animación spring suave y selector Órbita ⇄ SIGA */}
+      {/* Barra lateral izquierda con animación spring suave */}
       <aside
         aria-label="Navegación principal del campus"
         aria-hidden={sidebarCollapsed}
@@ -162,51 +155,20 @@ export function CampusShell({ shell, children }: { shell: CampusShellData; child
         }`}
       >
         <Link href="/dashboard" className="flex items-center gap-3 px-1.5 no-underline">
-          <LunitaEmblem size={40} className="shrink-0 transition-transform duration-300 hover:-rotate-6" />
+          {/* Lunita es el logo del Campus en todas las zonas. */}
+          <LunitaMark size={44} />
           <span className="min-w-0 leading-tight">
             <span className="block truncate text-lg font-black tracking-tight text-white">Campus Lunita</span>
             <span className="block truncate text-[0.72rem] font-bold text-yellow/90">Liceo Lunita de Chía</span>
           </span>
         </Link>
 
-        {/* Selector visual de zona: separa Órbita Virtual (Aula/Moodle) y SIGA dentro del mismo Campus */}
-        {zoneTabs.length > 0 && (
-          <div
-            role="group"
-            aria-label="Cambiar espacio del campus"
-            className="grid grid-cols-3 gap-1 rounded-2xl border border-white/14 bg-black/18 p-1 backdrop-blur-xs"
-          >
-            {zoneTabs.map((z) => {
-              const selected = activeZone === z.key;
-              return (
-                <button
-                  key={z.key}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => setManualZoneOverride({ path: pathname, zone: z.key })}
-                  className={`flex items-center justify-center gap-1 rounded-xl px-2 py-1.5 text-[0.7rem] font-extrabold transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow ${
-                    selected
-                      ? "bg-white text-navy shadow-sm"
-                      : "text-white/90 hover:bg-white/15 hover:text-white"
-                  }`}
-                >
-                  {z.logo && <PlatformLogo space={z.logo} size={16} className="shrink-0" />}
-                  <span>{z.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
         <div className="flex-1">
-          <CampusNavList
-            items={shell.navigation}
-            badges={shell.navBadges}
-            activeZone={activeZone}
-          />
+          <CampusNavList destinations={shell.destinations} badges={shell.navBadges} />
         </div>
 
-        <SidebarHighlightCard role={shell.user.role} pendingCount={sidebarPending} />
+        {/* Estudiantes y familias ya ven sus pendientes en «Lo que sigue» y en los contadores: no se repite aquí. */}
+        {!isFamilyRole && <SidebarHighlightCard role={shell.user.role} pendingCount={sidebarPending} />}
       </aside>
 
       {/* Tirador flotante orgánico montado justo sobre el borde divisor (desktop) */}
@@ -265,20 +227,20 @@ export function CampusShell({ shell, children }: { shell: CampusShellData; child
                 title="Desplegar barra lateral (Ctrl+B)"
                 className="group hidden shrink-0 items-center gap-2 rounded-pill border border-line bg-white py-1 pr-3 pl-1.5 text-xs font-extrabold text-navy shadow-2xs transition-all hover:border-cobalt/35 hover:bg-cloud lg:inline-flex"
               >
-                <LunitaEmblem size={26} className="transition-transform duration-300 group-hover:rotate-12" />
+                <LunitaMark size={28} />
                 <span>Campus Lunita</span>
               </button>
             )}
 
             {/* Emblema compacto en móvil/tablet */}
             <Link href="/dashboard" className="flex shrink-0 items-center gap-2 no-underline lg:hidden">
-              <LunitaEmblem size={30} />
+              <LunitaMark size={32} />
               <span className={`font-black text-navy ${isGuardian ? "hidden sm:inline" : ""}`}>
                 Campus Lunita
               </span>
             </Link>
 
-            <TopbarBreadcrumbs periodLabel={shell.periodLabel} />
+            <TopbarBreadcrumbs periodLabel={shell.periodLabel} destinations={shell.destinations} />
 
             <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
               {isGuardian && <ChildSwitcher options={shell.children} selectedId={shell.selectedChildId} />}
@@ -309,6 +271,7 @@ export function CampusShell({ shell, children }: { shell: CampusShellData; child
             sidebarCollapsed ? "max-w-[1440px]" : "max-w-6xl"
           }`}
         >
+          <DestinationTabs destinations={shell.destinations} badges={shell.navBadges} />
           <div key={pathname} className="campus-page-enter">
             {children}
           </div>
@@ -316,9 +279,8 @@ export function CampusShell({ shell, children }: { shell: CampusShellData; child
       </div>
 
       <MobileTabbar
-        navigation={shell.navigation}
-        tabKeys={shell.tabKeys}
-        onSearch={openPalette}
+        destinations={shell.destinations}
+        badges={shell.navBadges}
         onMenu={() => setMenuOpen(true)}
       />
 
@@ -327,8 +289,10 @@ export function CampusShell({ shell, children }: { shell: CampusShellData; child
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
         items={shell.navigation}
+        destinations={shell.destinations}
+        userId={shell.user.id}
       />
-      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} shell={shell} />
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} onSearch={openPalette} shell={shell} />
       <ToastViewport />
     </div>
   );

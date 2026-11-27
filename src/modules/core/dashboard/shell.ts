@@ -19,7 +19,12 @@ import {
   getGuardianChildren,
   getStudentPlacement,
 } from "@/modules/core/academic-structure/queries";
-import { getNavigation, getTabKeys, type ResolvedNavItem } from "@/modules/core/auth/navigation";
+import {
+  getDestinations,
+  getNavigation,
+  type ResolvedDestination,
+  type ResolvedNavItem,
+} from "@/modules/core/auth/navigation";
 import { resolveSelectedChildId } from "@/modules/core/auth/policies";
 import type { Role } from "@/modules/core/auth/roles";
 import type { SessionUser } from "@/modules/core/auth/session";
@@ -45,12 +50,13 @@ export interface ShellAlert {
 
 /** Datos serializables para el layout del Campus (sidebar, tabbar, buscador, alertas, hijo activo). */
 export interface CampusShellData {
-  user: { firstName: string; fullName: string; role: Role; initials: string; avatarUrl: string | null };
+  user: { id: string; firstName: string; fullName: string; role: Role; initials: string; avatarUrl: string | null };
   /** Registro visual del marco (SISTEMA_DISENO.md §1), calculado en servidor. */
   stage: Stage;
   /** Solo módulos ya habilitados: la hoja de ruta interna no se muestra a usuarios. */
   navigation: ResolvedNavItem[];
-  tabKeys: readonly string[];
+  /** Navegación de 4 destinos del rol (cada módulo vive en uno solo). */
+  destinations: ResolvedDestination[];
   periodLabel: string | null;
   children: ShellChild[];
   selectedChildId: string | null;
@@ -304,8 +310,10 @@ export const getCampusShellData = cache(async (actor: SessionUser): Promise<Camp
     }
   }
 
+  const navigation = getNavigation(actor.role).filter((item) => item.available);
   return {
     user: {
+      id: actor.id,
       firstName: actor.firstName,
       fullName: actor.fullName,
       role: actor.role,
@@ -313,8 +321,8 @@ export const getCampusShellData = cache(async (actor: SessionUser): Promise<Camp
       avatarUrl: buildAvatarApiUrl(actor.id, actor.avatarUrl),
     },
     stage: frameStage(actor.role, studentLevel),
-    navigation: getNavigation(actor.role).filter((item) => item.available),
-    tabKeys: getTabKeys(actor.role),
+    navigation,
+    destinations: getDestinations(actor.role, navigation),
     periodLabel: context?.currentPeriod
       ? `${context.currentPeriod.name} · ${context.year.year}`
       : (context?.year.name ?? null),

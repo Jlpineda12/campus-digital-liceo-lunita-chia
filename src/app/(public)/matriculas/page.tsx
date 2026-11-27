@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PublicAdmissionsPortal } from "@/components/matriculas/PublicAdmissionsPortal";
 import { LunitaEmblem } from "@/components/ui/LunitaEmblem";
 import { ToastViewport } from "@/components/ui/ToastViewport";
+import { todayInBogota } from "@/modules/core/academic-structure/queries";
 import { getSession } from "@/modules/core/auth/session";
 import {
   listGuardianRenewalCandidates,
@@ -120,6 +121,7 @@ export default async function MatriculasPage({ searchParams }: { searchParams: S
           isLoggedGuardian={session?.user.role === "GUARDIAN"}
           lookedUpApp={lookedUpApp}
           lookupQuery={{ radicado, doc }}
+          today={todayInBogota()}
         />
       </main>
 

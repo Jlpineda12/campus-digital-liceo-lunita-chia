@@ -1,8 +1,8 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { LunitaEmblem } from "@/components/ui/LunitaEmblem";
+import { LunitaMark } from "@/components/brand/LunitaMark";
 import type { CampusShellData } from "@/modules/core/dashboard/shell";
 import { CampusNavList } from "./CampusNavList";
 import { UserBlock } from "./UserBlock";
@@ -11,10 +11,12 @@ import { UserBlock } from "./UserBlock";
 export function MobileMenu({
   open,
   onClose,
+  onSearch,
   shell,
 }: {
   open: boolean;
   onClose: () => void;
+  onSearch: () => void;
   shell: CampusShellData;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -43,7 +45,7 @@ export function MobileMenu({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <LunitaEmblem size={36} />
+            <LunitaMark size={38} />
             <span className="font-extrabold text-white">Campus Lunita</span>
           </div>
           <button
@@ -55,8 +57,15 @@ export function MobileMenu({
             <X className="size-6" aria-hidden />
           </button>
         </div>
+        <button
+          type="button"
+          onClick={onSearch}
+          className="flex min-h-11 items-center gap-2 rounded-control border border-white/20 bg-white/10 px-3.5 text-sm font-semibold text-white/85 hover:bg-white/16"
+        >
+          <Search className="size-4" aria-hidden /> Buscar en el campus…
+        </button>
         <div className="flex-1">
-          <CampusNavList items={shell.navigation} badges={shell.navBadges} onNavigate={onClose} />
+          <CampusNavList destinations={shell.destinations} badges={shell.navBadges} expandAll onNavigate={onClose} />
         </div>
         <UserBlock user={shell.user} />
       </div>

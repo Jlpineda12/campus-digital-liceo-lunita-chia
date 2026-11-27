@@ -3,60 +3,51 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  findActiveDestination,
+  findActiveItem,
+  type ResolvedDestination,
+} from "@/modules/core/auth/navigation";
 
 interface Crumb {
   label: string;
   href?: string;
 }
 
-function buildCrumbs(pathname: string): Crumb[] {
-  if (pathname === "/dashboard") {
-    return [{ label: "Inicio" }];
-  }
+/** Migas por destino: «Mi progreso › Boletines», más el detalle de rutas profundas del Aula. */
+function buildCrumbs(pathname: string, destinations: ResolvedDestination[]): Crumb[] {
+  const dest = findActiveDestination(destinations, pathname);
+  const item = dest ? findActiveItem(dest.items, pathname) : null;
+  if (!dest || !item) return [{ label: "Campus Lunita" }];
 
-  const crumbs: Crumb[] = [{ label: "Inicio", href: "/dashboard" }];
+  const crumbs: Crumb[] = [];
+  if (dest.items.length > 1 || dest.href !== item.href) crumbs.push({ label: dest.label, href: dest.href });
+  const deeper = pathname !== item.href;
+  crumbs.push({ label: item.label, href: deeper ? item.href : undefined });
 
-  if (pathname === "/aula") {
-    crumbs.push({ label: "Órbita Virtual" });
-  } else if (pathname === "/aula/tareas") {
-    crumbs.push({ label: "Órbita Virtual", href: "/aula" }, { label: "Tareas y cuestionarios" });
-  } else if (pathname.startsWith("/aula/")) {
+  if (deeper && item.key === "courses") {
     const segments = pathname.split("/").filter(Boolean); // ["aula", cursoId, ...]
-    crumbs.push({ label: "Órbita Virtual", href: "/aula" });
     if (segments.length === 2) {
       crumbs.push({ label: "Curso" });
     } else if (segments[2] === "tareas") {
       crumbs.push({ label: "Curso", href: `/aula/${segments[1]}` }, { label: "Entrega de tarea" });
     } else if (segments[2] === "quiz") {
-      crumbs.push({ label: "Curso", href: `/aula/${segments[1]}` }, { label: "Cuestionario interactivo" });
+      crumbs.push({ label: "Curso", href: `/aula/${segments[1]}` }, { label: "Cuestionario" });
     }
-  } else if (pathname.startsWith("/siga/")) {
-    const map: Record<string, string> = {
-      "/siga/calificaciones": "Calificaciones y logros",
-      "/siga/boletines": "Boletines oficiales",
-      "/siga/observador": "Observador del estudiante",
-      "/siga/asistencia": "Asistencia y excusas",
-      "/siga/agenda": "Agenda y circulares",
-      "/siga/cartera": "Cartera y pagos",
-    };
-    crumbs.push({ label: "SIGA Lunita" }, { label: map[pathname] ?? "Módulo académico" });
-  } else if (pathname.startsWith("/admin/")) {
-    const map: Record<string, string> = {
-      "/admin/usuarios": "Usuarios y roles",
-      "/admin/estructura": "Estructura académica",
-      "/admin/matriculas": "Matrículas 2027",
-      "/admin/migracion": "Migración y SIMAT",
-    };
-    crumbs.push({ label: "Dirección" }, { label: map[pathname] ?? "Gestión institucional" });
   }
-
   return crumbs;
 }
 
 /** Migas de pan discretas en la barra superior para orientar siempre al usuario. */
-export function TopbarBreadcrumbs({ periodLabel }: { periodLabel: string | null }) {
+export function TopbarBreadcrumbs({
+  periodLabel,
+  destinations,
+}: {
+  periodLabel: string | null;
+  destinations: ResolvedDestination[];
+}) {
   const pathname = usePathname();
-  const crumbs = buildCrumbs(pathname);
+  const crumbs = buildCrumbs(pathname, destinations);
 
   return (
     <div className="hidden min-w-0 items-center gap-3 lg:flex">

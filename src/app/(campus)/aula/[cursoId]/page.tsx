@@ -80,6 +80,18 @@ export default async function CursoWorkspacePage({
   const baseHref = `/aula/${cursoId}?periodo=${period.id}`;
   const isCompactLayout = workspace.theme.layoutStyle === "compact";
 
+  // Para el estudiante: lo siguiente por hacer en ESTE curso, y qué unidades ya terminó.
+  const nextUp = isFamily
+    ? workspace.units
+        .flatMap((u) => u.activities.map((a) => ({ ...a, unitId: u.id, unitTitle: u.title })))
+        .filter((a) => a.studentStatus === "PENDING")
+        .sort((a, b) => (a.dueDate?.getTime() ?? Infinity) - (b.dueDate?.getTime() ?? Infinity))[0] ?? null
+    : null;
+  const unitIsDone = (u: (typeof workspace.units)[number]) =>
+    u.resources.length + u.activities.length > 0 &&
+    u.resources.every((r) => r.viewed) &&
+    u.activities.every((a) => a.studentStatus === "SUBMITTED" || a.studentStatus === "GRADED");
+
   return (
     <div data-stage={stage} className="grid gap-6">
       <header className="grid gap-4">
@@ -187,6 +199,28 @@ export default async function CursoWorkspacePage({
         </TactileCard>
       ) : (
         <div className="grid gap-5">
+          {nextUp && (
+            <Link
+              href={nextUp.type === "QUIZ" ? `/aula/${cursoId}/quiz/${nextUp.id}` : `/aula/${cursoId}/tareas/${nextUp.id}`}
+              className="group flex flex-wrap items-center gap-4 rounded-2xl border-2 border-cobalt/30 bg-cloud/60 px-5 py-4 no-underline transition-colors hover:border-cobalt/60"
+            >
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-cobalt text-yellow">
+                {nextUp.type === "QUIZ" ? <Sparkles className="size-5" aria-hidden /> : <ClipboardList className="size-5" aria-hidden />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-extrabold tracking-wide text-cobalt uppercase">Sigue aquí</span>
+                <span className="block truncate font-bold text-navy">{nextUp.title}</span>
+                <span className="block truncate text-xs text-muted">
+                  {nextUp.unitTitle}
+                  {nextUp.dueDate ? ` · ${nextUp.type === "QUIZ" ? "Cierra" : "Entrega"} ${dueFormat.format(nextUp.dueDate)}` : ""}
+                </span>
+              </span>
+              <span className="inline-flex items-center gap-1 text-sm font-extrabold text-cobalt">
+                {nextUp.type === "QUIZ" ? "Presentar" : "Abrir"}
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </span>
+            </Link>
+          )}
           <CourseProgressPath units={workspace.units} isFamily={isFamily} />
 
           <div className={isCompactLayout ? "grid gap-3" : "grid gap-5"}>
@@ -259,7 +293,7 @@ export default async function CursoWorkspacePage({
                                     {act.syncToSiga && (
                                       <span className="inline-flex items-center gap-1 font-semibold text-sky-solid">
                                         <Link2 className="size-3" aria-hidden />
-                                        SIGA{act.sigaLabel ? ` (${act.sigaLabel})` : ""}
+                                        {isFamily ? "Cuenta para la nota" : `SIGA${act.sigaLabel ? ` (${act.sigaLabel})` : ""}`}
                                       </span>
                                     )}
                                   </p>
@@ -300,12 +334,13 @@ export default async function CursoWorkspacePage({
               </>
             );
 
-            if (isCompactLayout) {
+            const done = isFamily && unitIsDone(unit);
+            if (isCompactLayout || done) {
               return (
                 <details
                   key={unit.id}
                   id={`modulo-${unit.id}`}
-                  open={idx === 0}
+                  open={isFamily ? !done && (nextUp ? nextUp.unitId === unit.id : idx === 0) : idx === 0}
                   className="card group bg-white p-0 open:pb-4"
                 >
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-3.5 hover:bg-cloud/40">
@@ -315,8 +350,10 @@ export default async function CursoWorkspacePage({
                       </span>
                       <h2 className="text-base font-bold text-navy">{unit.title}</h2>
                     </div>
-                    <span className="text-xs font-semibold text-muted tabular">
-                      {isFamily && unitTotal > 0
+                    <span className={cx("text-xs font-semibold tabular", done ? "text-green-solid" : "text-muted")}>
+                      {done
+                        ? "✓ Completado"
+                        : isFamily && unitTotal > 0
                         ? `${unitDone}/${unitTotal} completado`
                         : `${unit.resources.length} rec. · ${unit.activities.length} act.`}
                     </span>

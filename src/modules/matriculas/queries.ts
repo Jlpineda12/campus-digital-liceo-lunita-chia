@@ -1,4 +1,5 @@
 import "server-only";
+import type { EarlyBirdStatus, SiblingClaimStatus } from "./discount-policy";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
@@ -65,6 +66,11 @@ export interface AdmissionApplicationDetail {
   address: string;
   hasSiblingDiscount: boolean;
   hasEarlyBirdDiscount: boolean;
+  earlyBirdStatus: EarlyBirdStatus;
+  siblingClaimStatus: SiblingClaimStatus;
+  /** Evidencia de la verificación de hermanos: solo para personal (null en la consulta pública). */
+  siblingVerificationNote: string | null;
+  siblingReferenceDoc: string | null;
   estimatedEnrollmentCop: number;
   estimatedMonthlyCop: number;
   habeasDataAcceptedAt: Date;
@@ -202,6 +208,10 @@ export async function lookupPublicApplication(
     address: row.app.address,
     hasSiblingDiscount: row.app.hasSiblingDiscount,
     hasEarlyBirdDiscount: row.app.hasEarlyBirdDiscount,
+    earlyBirdStatus: row.app.earlyBirdStatus,
+    siblingClaimStatus: row.app.siblingClaimStatus,
+    siblingVerificationNote: null,
+    siblingReferenceDoc: null,
     estimatedEnrollmentCop: row.app.estimatedEnrollmentCop,
     estimatedMonthlyCop: row.app.estimatedMonthlyCop,
     habeasDataAcceptedAt: row.app.habeasDataAcceptedAt,
@@ -384,6 +394,10 @@ export async function listStaffAdmissionsData(statusFilter?: AdmissionStatus) {
     address: app.address,
     hasSiblingDiscount: app.hasSiblingDiscount,
     hasEarlyBirdDiscount: app.hasEarlyBirdDiscount,
+    earlyBirdStatus: app.earlyBirdStatus,
+    siblingClaimStatus: app.siblingClaimStatus,
+    siblingVerificationNote: app.siblingVerificationNote,
+    siblingReferenceDoc: app.siblingReferenceDoc,
     estimatedEnrollmentCop: app.estimatedEnrollmentCop,
     estimatedMonthlyCop: app.estimatedMonthlyCop,
     habeasDataAcceptedAt: app.habeasDataAcceptedAt,

@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { DualZonePortal } from "@/components/dashboard/DualZonePortal";
 import { GuardianChildren } from "@/components/dashboard/GuardianChildren";
 import { SectionHeader, WelcomeHero } from "@/components/dashboard/parts";
-import { StaffPanel } from "@/components/dashboard/StaffPanel";
-import { StudentPanel } from "@/components/dashboard/StudentPanel";
-import { DirectedGroups, TeacherLoadTable, TeacherStats } from "@/components/dashboard/TeacherPanel";
+import { StaffHome } from "@/components/dashboard/StaffHome";
+import { StudentHome } from "@/components/dashboard/StudentHome";
+import { TeacherHome } from "@/components/dashboard/TeacherHome";
 import { TactileCard } from "@/components/ui/TactileCard";
 import { requireSession } from "@/modules/core/auth/guards";
 import { ROLE_META } from "@/modules/core/auth/roles";
@@ -26,13 +25,13 @@ function colombiaGreeting(firstName: string, playful = false): string {
 }
 
 /**
- * Panel principal con Portal Dual (**Órbita Virtual ⇄ SIGA Lunita**) y analítica por rol.
+ * Inicio por rol. Estudiante y familia: «Lo que sigue», «Cómo voy» y «Próxima insignia».
  * El tono sigue la etapa (SISTEMA_DISENO.md §3): cercano en primaria,
  * directo en bachillerato, operativo en lo institucional.
  */
 export default async function DashboardPage() {
   const user = await requireSession();
-  const [data, shell] = await Promise.all([getDashboardData(user), getCampusShellData(user)]);
+  const data = await getDashboardData(user);
 
   switch (data.role) {
     case "STUDENT": {
@@ -45,20 +44,16 @@ export default async function DashboardPage() {
             title={colombiaGreeting(user.firstName, primaria)}
             subtitle={
               primaria
-                ? "Elige si quieres entrar a tus cursos en Órbita Virtual o revisar tus notas en SIGA Lunita."
+                ? "Tus clases, tareas y notas te esperan. ¡Vamos!"
                 : data.context?.currentPeriod
                   ? `Bienvenido a tu Campus Digital · ${data.context.currentPeriod.name}.`
                   : "Bienvenido a tu Campus Digital."
             }
             context={data.context}
           />
-          <DualZonePortal
-            role="STUDENT"
-            stage={stage}
-            navBadges={shell.navBadges}
-            coursesCount={data.student.courses.length}
-          />
-          <StudentPanel view={data.student} audience="self" />
+          {data.context && (
+            <StudentHome actor={user} view={data.student} academicYearId={data.context.year.id} audience="self" />
+          )}
         </div>
       );
     }
@@ -88,14 +83,9 @@ export default async function DashboardPage() {
               <GuardianChildren items={data.children} selectedId={s?.studentId ?? null} />
             </section>
           ) : null}
-          <DualZonePortal
-            role="GUARDIAN"
-            stage="institucional"
-            studentFirstName={s?.firstName}
-            navBadges={shell.navBadges}
-            coursesCount={s?.courses.length ?? 0}
-          />
-          {s && <StudentPanel view={s} audience="guardian" />}
+          {s && data.context && (
+            <StudentHome actor={user} view={s} academicYearId={data.context.year.id} audience="guardian" />
+          )}
         </div>
       );
     }
@@ -106,18 +96,14 @@ export default async function DashboardPage() {
           <WelcomeHero
             kicker="Docente"
             title={colombiaGreeting(user.firstName)}
-            subtitle="Gestiona tus cursos y quices en Órbita Virtual o tus planillas y asistencia en SIGA Lunita."
+            subtitle="Tus clases, planillas y asistencia del día, a un clic."
             context={data.context}
           />
-          <DualZonePortal
-            role="TEACHER"
-            stage="institucional"
-            navBadges={shell.navBadges}
-            coursesCount={data.totals.courses}
-          />
-          <TeacherStats totals={data.totals} />
-          <DirectedGroups groups={data.directed} />
-          <TeacherLoadTable load={data.load} />
+          {data.context ? (
+            <TeacherHome actor={user} context={data.context} directed={data.directed} />
+          ) : (
+            <TactileCard className="text-center text-muted">No hay un año lectivo vigente.</TactileCard>
+          )}
         </div>
       );
 
@@ -131,9 +117,13 @@ export default async function DashboardPage() {
             subtitle={data.context ? `Panorama institucional · ${data.context.year.name}` : "Panorama institucional"}
             context={data.context}
           />
-          <DualZonePortal role={data.role} stage="institucional" navBadges={shell.navBadges} />
           {data.overview && data.context ? (
-            <StaffPanel overview={data.overview} context={data.context} />
+            <StaffHome
+              actor={user}
+              context={data.context}
+              navBadges={(await getCampusShellData(user)).navBadges}
+              alerts={data.alerts}
+            />
           ) : (
             <TactileCard className="text-center text-muted">
               No hay un año lectivo marcado como vigente. Configúralo en Estructura académica.

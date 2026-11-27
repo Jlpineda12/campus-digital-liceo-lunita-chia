@@ -9,6 +9,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { EARLY_BIRD_STATUSES, SIBLING_CLAIM_STATUSES } from "@/modules/matriculas/discount-policy";
 import { createdAt, id, isoDate, timestamptz } from "./_helpers";
 import { academicYears, grades, groups, users } from "./core";
 import { documentType, enrollmentType } from "./enums";
@@ -28,6 +29,10 @@ export const ADMISSION_STATUSES = [
 ] as const;
 export type AdmissionStatus = (typeof ADMISSION_STATUSES)[number];
 export const admissionStatus = pgEnum("admission_status", ADMISSION_STATUSES);
+
+/** Estados verificables de los descuentos (ver modules/matriculas/discount-policy.ts). */
+export const earlyBirdStatus = pgEnum("early_bird_status", EARLY_BIRD_STATUSES);
+export const siblingClaimStatus = pgEnum("sibling_claim_status", SIBLING_CLAIM_STATUSES);
 
 export const ADMISSION_DOC_STATUSES = [
   "PENDING",
@@ -101,7 +106,15 @@ export const admissionApplications = pgTable(
     guardianEmail: text("guardian_email").notNull(),
     guardianPhone: text("guardian_phone").notNull(),
     address: text("address").notNull().default(""),
-    // Costos estimados y descuentos (COP)
+    // Descuentos: estado verificable + bandera efectiva derivada (nunca autodeclarada)
+    earlyBirdStatus: earlyBirdStatus("early_bird_status").notNull().default("NOT_ELIGIBLE"),
+    siblingClaimStatus: siblingClaimStatus("sibling_claim_status").notNull().default("NOT_REQUESTED"),
+    /** Documento del hermano(a) que declara la familia. */
+    siblingReferenceDoc: text("sibling_reference_doc"),
+    /** Evidencia para Secretaría (no se muestra a la familia). */
+    siblingVerificationNote: text("sibling_verification_note"),
+    siblingReviewedBy: uuid("sibling_reviewed_by").references(() => users.id, { onDelete: "set null" }),
+    siblingReviewedAt: timestamptz("sibling_reviewed_at"),
     hasSiblingDiscount: boolean("has_sibling_discount").notNull().default(false),
     hasEarlyBirdDiscount: boolean("has_early_bird_discount").notNull().default(false),
     estimatedEnrollmentCop: integer("estimated_enrollment_cop").notNull().default(0),
@@ -114,6 +127,8 @@ export const admissionApplications = pgTable(
     paymentChannel: paymentChannel("payment_channel"),
     paymentReference: text("payment_reference"),
     paymentReceiptKey: text("payment_receipt_key"),
+    /** Fecha en que la familia reportó el pago: define si el pronto pago se confirma. */
+    paymentReportedAt: timestamptz("payment_reported_at"),
     paymentVerifiedAt: timestamptz("payment_verified_at"),
     // Revisión Coordinación y Formalización Secretaría
     academicReviewedBy: uuid("academic_reviewed_by").references(() => users.id, { onDelete: "set null" }),

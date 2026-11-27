@@ -18,6 +18,7 @@ import {
   academicDecisionAction,
   formalizeAdmissionAction,
   reviewAdmissionDocumentAction,
+  reviewSiblingDiscountAction,
   type AdmissionActionState,
 } from "@/modules/matriculas/actions";
 import {
@@ -26,6 +27,7 @@ import {
   formatCop,
   PAYMENT_CHANNEL_LABELS,
 } from "@/modules/matriculas/catalog";
+import { EARLY_BIRD_LABELS, SIBLING_LABELS } from "@/modules/matriculas/discount-policy";
 import type {
   AdmissionApplicationDetail,
   AdmissionDocView,
@@ -122,6 +124,66 @@ function StaffDocReviewRow({ doc }: { doc: AdmissionDocView }) {
   );
 }
 
+/** Beneficios verificables: pronto pago (por fecha) y hermanos (verificación + revisión de Secretaría). */
+function BenefitsReview({ app, canReview }: { app: AdmissionApplicationDetail; canReview: boolean }) {
+  const sibling = app.siblingClaimStatus;
+  const canDecide = canReview && sibling !== "NOT_REQUESTED" && app.status !== "ENROLLED";
+  const earlyTone =
+    app.earlyBirdStatus === "CONFIRMED" ? "green" : app.earlyBirdStatus === "EXPIRED" ? "orange" : "blue";
+  const siblingTone =
+    sibling === "VERIFIED" ? "green" : sibling === "REJECTED" ? "red" : sibling === "PENDING_REVIEW" ? "orange" : "sky";
+
+  return (
+    <div className="grid gap-3 rounded-control border border-line p-3 text-xs">
+      <p className="flex items-center gap-1.5 font-bold text-muted uppercase">
+        <Award className="size-3.5 text-cobalt" aria-hidden /> Beneficios
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Chip tone={earlyTone}>Pronto pago · {EARLY_BIRD_LABELS[app.earlyBirdStatus]}</Chip>
+        <Chip tone={siblingTone}>Hermanos · {SIBLING_LABELS[sibling]}</Chip>
+      </div>
+      {sibling !== "NOT_REQUESTED" && (
+        <div className="grid gap-1 rounded-control bg-bg-2/70 p-2.5 text-ink-2">
+          {app.siblingReferenceDoc && (
+            <p>
+              Documento declarado del hermano(a): <strong className="tabular">{app.siblingReferenceDoc}</strong>
+            </p>
+          )}
+          {app.siblingVerificationNote && <p>{app.siblingVerificationNote}</p>}
+        </div>
+      )}
+      {canDecide && (
+        <div className="flex flex-wrap gap-2">
+          {sibling !== "VERIFIED" && (
+            <form action={reviewSiblingDiscountAction}>
+              <input type="hidden" name="applicationId" value={app.id} />
+              <input type="hidden" name="decision" value="VERIFIED" />
+              <button
+                type="submit"
+                className="inline-flex items-center gap-1 rounded-control bg-green-solid px-2.5 py-1.5 text-xs font-bold text-white hover:brightness-95"
+              >
+                <CheckCircle2 className="size-3.5" aria-hidden /> Aprobar descuento de hermanos
+              </button>
+            </form>
+          )}
+          {sibling !== "REJECTED" && (
+            <form action={reviewSiblingDiscountAction}>
+              <input type="hidden" name="applicationId" value={app.id} />
+              <input type="hidden" name="decision" value="REJECTED" />
+              <button
+                type="submit"
+                className="inline-flex items-center gap-1 rounded-control border border-line-2 bg-white px-2.5 py-1.5 text-xs font-semibold text-red-solid hover:bg-red-l/50"
+              >
+                <XCircle className="size-3.5" aria-hidden /> No aplica
+              </button>
+            </form>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Panel maestro-detalle de revisión documental, aval académico y formalización de Matrículas 2027. */
 export function AdminAdmissionsBoard({
   applications,
@@ -196,6 +258,9 @@ export function AdminAdmissionsBoard({
                   <p className="truncate text-xs text-muted">
                     {app.targetGradeName} · {app.applicationType === "NEW" ? "Familia nueva" : "Renovación"}
                   </p>
+                  {app.siblingClaimStatus === "PENDING_REVIEW" && (
+                    <p className="text-[0.68rem] font-bold text-orange-solid">● Descuento de hermanos por revisar</p>
+                  )}
                 </button>
               </li>
             );
@@ -271,6 +336,8 @@ export function AdminAdmissionsBoard({
               )}
             </div>
           </dl>
+
+          <BenefitsReview app={active} canReview={canFormalize} />
         </section>
 
         {/* Credenciales generadas tras formalizar */}

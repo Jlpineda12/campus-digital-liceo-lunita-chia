@@ -73,8 +73,10 @@ describe("Navegación por rol (RBAC)", () => {
     const available = getNavigation("ADMIN").filter((i) => i.available).map((i) => i.key);
     assert.deepEqual(available, [
       "dashboard",
+      "courseReview",
       "grades",
       "reportCards",
+      "finalReport",
       "observer",
       "attendance",
       "agenda",

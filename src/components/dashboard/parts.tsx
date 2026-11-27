@@ -5,7 +5,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Chip } from "@/components/ui/Chip";
 import { cx } from "@/components/ui/cx";
 import { IconBubble } from "@/components/ui/IconBubble";
-import { LunitaEmblem } from "@/components/ui/LunitaEmblem";
+import { LunitaMark } from "@/components/brand/LunitaMark";
 import { StheamiBadge } from "@/components/ui/StheamiBadge";
 import { TactileCard } from "@/components/ui/TactileCard";
 import { formatDateRange, getPeriodProgress } from "@/modules/core/academic-structure/dates";
@@ -36,7 +36,7 @@ export function WelcomeHero({
       <div className="grid gap-6 lg:grid-cols-[1fr_minmax(16rem,22rem)] lg:items-center">
         <div className="flex items-center gap-5">
           {/* Mascota Lunita: visible solo en primaria (ver .mascot en globals.css) */}
-          <LunitaEmblem size={76} className="mascot shrink-0" />
+          <LunitaMark size={76} className="mascot" />
           <div className="min-w-0">
             <p className="kicker">
               <span className="moon" aria-hidden /> {kicker}
