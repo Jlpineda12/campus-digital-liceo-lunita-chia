@@ -1,0 +1,406 @@
+/* Cabecera de Matrículas con el estilo del sitio web (página de Admisiones). */
+.mhero {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 5.25rem;
+  background:
+    radial-gradient(60% 80% at 88% 20%, #ffe9a8 0%, transparent 60%),
+    radial-gradient(50% 60% at 8% 90%, #fff0c9 0%, transparent 70%),
+    linear-gradient(180deg, #fff4c2 0%, #fff7d6 100%);
+  color: var(--navy);
+}
+.mhero__sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.mhero__float--a {
+  animation: mhero-float 7s ease-in-out infinite alternate;
+}
+.mhero__float--b {
+  animation: mhero-float 9s ease-in-out infinite alternate-reverse;
+}
+.mhero__twinkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mhero-twinkle 3.2s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.55s);
+}
+
+.mhero__bar,
+.mhero__main,
+.mhero__route {
+  position: relative;
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+@media (width >= 40rem) {
+  .mhero__bar,
+  .mhero__main,
+  .mhero__route {
+    padding-inline: 2rem;
+  }
+}
+
+.mhero__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1.25rem;
+}
+.mhero__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--navy);
+  text-decoration: none;
+}
+.mhero__brand > span:last-child {
+  display: grid;
+  line-height: 1.15;
+}
+.mhero__brand-kicker {
+  color: var(--cobalt);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.mhero__brand-name {
+  font-size: 1rem;
+  font-weight: 900;
+}
+.mhero__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 3px 0 rgb(15 23 71 / 0.12);
+  color: var(--navy);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform 220ms var(--spring);
+}
+.mhero__back:hover {
+  transform: translateY(-2px);
+}
+
+.mhero__main {
+  display: grid;
+  align-items: center;
+  gap: 1.5rem;
+  padding-top: 1.75rem;
+}
+@media (width >= 52rem) {
+  .mhero__main {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+.mhero__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #a16207;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  animation: mhero-rise 600ms var(--spring) both;
+}
+.mhero__title {
+  margin-top: 0.4rem;
+  color: var(--navy);
+  font-family: var(--font-playful);
+  font-size: clamp(2.1rem, 1.4rem + 3.4vw, 3.6rem);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  animation: mhero-rise 700ms 80ms var(--spring) both;
+}
+.mhero__title span {
+  display: block;
+  color: var(--cobalt);
+}
+.mhero__lead {
+  max-width: 34rem;
+  margin-top: 0.8rem;
+  color: #3d4a6b;
+  font-size: clamp(0.98rem, 0.9rem + 0.3vw, 1.12rem);
+  font-weight: 600;
+  animation: mhero-rise 700ms 160ms var(--spring) both;
+}
+.mhero__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.1rem;
+  animation: mhero-rise 700ms 240ms var(--spring) both;
+}
+.mhero__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.85);
+  box-shadow: inset 0 0 0 1px rgb(15 23 71 / 0.08);
+  color: var(--navy);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.mhero__chip svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--cobalt);
+}
+.mhero__chip--hot {
+  background: var(--navy);
+  color: #fff;
+}
+.mhero__chip--hot svg {
+  color: var(--yellow);
+}
+
+/* Lunita en su portal (como el espejo del sitio) */
+.mhero__portal {
+  position: relative;
+  display: none;
+  place-items: center;
+  width: clamp(190px, 22vw, 260px);
+  aspect-ratio: 0.82;
+  justify-self: end;
+}
+@media (width >= 52rem) {
+  .mhero__portal {
+    display: grid;
+  }
+}
+.mhero__ring {
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, rgb(255 255 255 / 0.95) 0%, rgb(255 236 170 / 0.6) 55%, transparent 72%);
+  animation: mhero-pop 800ms 150ms var(--spring) both;
+}
+.mhero__ring::before,
+.mhero__ring::after {
+  content: "★";
+  position: absolute;
+  color: var(--yellow);
+  font-size: 1.3rem;
+  animation: mhero-twinkle 2.6s ease-in-out infinite;
+}
+.mhero__ring::before {
+  top: 10%;
+  right: 8%;
+}
+.mhero__ring::after {
+  bottom: 18%;
+  left: 2%;
+  color: #ff86d0;
+  font-size: 0.95rem;
+  animation-delay: -1.2s;
+}
+.mhero__portal .lunita {
+  position: relative;
+  animation: mhero-float 4.5s ease-in-out infinite alternate;
+}
+
+/* Ruta de 4 pasos */
+.mhero__route {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 0.75rem;
+  margin-top: 2rem;
+  list-style: none;
+}
+@media (width >= 48rem) {
+  .mhero__route {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  /* Línea punteada que une los pasos, con un cometa que la recorre */
+  .mhero__route::before {
+    content: "";
+    position: absolute;
+    top: 30px;
+    left: calc(12.5% + 1rem);
+    right: calc(12.5% + 1rem);
+    height: 4px;
+    background: repeating-linear-gradient(90deg, #d6b25b 0 12px, transparent 12px 22px);
+    border-radius: 4px;
+    animation: mhero-dash 1.6s linear infinite;
+  }
+  .mhero__comet {
+    position: absolute;
+    top: 22px;
+    left: calc(12.5% + 1rem);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0 30%, var(--yellow) 31% 60%, transparent 62%);
+    box-shadow: 0 0 14px 4px rgb(255 200 0 / 0.55);
+    animation: mhero-comet 6s 1.2s ease-in-out infinite;
+  }
+}
+.mhero__comet {
+  display: none;
+}
+@media (width >= 48rem) {
+  .mhero__comet {
+    display: block;
+  }
+}
+.mhero__step {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  text-align: center;
+  animation: mhero-rise 600ms var(--spring) both;
+  animation-delay: calc(var(--i) * 110ms + 280ms);
+}
+.mhero__node {
+  position: relative;
+  display: grid;
+  width: 60px;
+  height: 60px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow:
+    0 5px 0 var(--cd),
+    0 0 0 6px rgb(255 255 255 / 0.85);
+  transition: transform 260ms var(--spring);
+}
+.mhero__step:hover .mhero__node {
+  transform: translateY(-4px) rotate(-6deg);
+}
+.mhero__num {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 2px solid var(--c);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--navy);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+.mhero__step-text {
+  display: grid;
+  gap: 0.1rem;
+}
+.mhero__step-text strong {
+  color: var(--navy);
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+.mhero__step-text small {
+  color: #5b6684;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+/* Ola punteada con estrella (cierre del banner) */
+.mhero__wave {
+  position: absolute;
+  inset: auto 0 0;
+  height: 70px;
+}
+.mhero__wave svg {
+  width: 100%;
+  height: 100%;
+}
+.mhero__dash {
+  stroke: #d6a21e;
+  stroke-width: 4;
+  stroke-dasharray: 14 10;
+  vector-effect: non-scaling-stroke;
+  animation: mhero-march 2.4s linear infinite;
+}
+.mhero__star {
+  position: absolute;
+  right: 3%;
+  top: 6px;
+  color: var(--yellow);
+  font-size: 1.6rem;
+  text-shadow: 0 2px 0 #d6a21e;
+  animation: mhero-twinkle 2.2s ease-in-out infinite;
+}
+
+@keyframes mhero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+@keyframes mhero-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.7) rotate(-8deg);
+  }
+}
+@keyframes mhero-float {
+  from {
+    translate: 0 -5px;
+  }
+  to {
+    translate: 0 6px;
+  }
+}
+@keyframes mhero-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.75);
+  }
+}
+@keyframes mhero-dash {
+  to {
+    background-position: 22px 0;
+  }
+}
+@keyframes mhero-march {
+  to {
+    stroke-dashoffset: -48;
+  }
+}
+@keyframes mhero-comet {
+  0% {
+    left: calc(12.5% + 1rem);
+    opacity: 0;
+  }
+  10%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    left: calc(87.5% - 1rem - 20px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mhero *,
+  .mhero *::before,
+  .mhero__route::before {
+    animation: none !important;
+  }
+}
