@@ -1,7 +1,11 @@
 import { ClipboardCheck, FilePenLine, Layers, PenLine } from "lucide-react";
 import Link from "next/link";
+import { countByPillar, StheamiBlocks } from "@/components/aula/StheamiBlocks";
 import { listAulaCoursesForActor } from "@/modules/aula/queries";
-import type { AcademicContext, DirectedGroup } from "@/modules/core/academic-structure/queries";
+import type {
+  AcademicContext,
+  DirectedGroup,
+} from "@/modules/core/academic-structure/queries";
 import type { SessionUser } from "@/modules/core/auth/session";
 import { getPeriodComplianceOverview } from "@/modules/siga/siee-grades/compliance";
 import { ActionList, type WorkAction } from "./ActionList";
@@ -27,8 +31,10 @@ export async function TeacherHome({
       ? getPeriodComplianceOverview(context.year.id, period.id)
       : Promise.resolve(null),
   ]);
-  const mine = overview?.teachers.find((t) => t.teacherId === actor.id)?.courses ?? [];
-  const label = (c: { subjectName: string; groupName: string }) => `${c.subjectName} · ${c.groupName}`;
+  const mine =
+    overview?.teachers.find((t) => t.teacherId === actor.id)?.courses ?? [];
+  const label = (c: { subjectName: string; groupName: string }) =>
+    `${c.subjectName} · ${c.groupName}`;
 
   const actions: WorkAction[] = [
     ...aula.courses
@@ -76,41 +82,72 @@ export async function TeacherHome({
   ];
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
-      <ActionList title="Lo que sigue" actions={actions} emptyText="Todo al día: sin entregas ni planillas pendientes." />
+    <div className="grid gap-7">
+      <StheamiBlocks
+        counts={countByPillar(aula.courses)}
+        hrefBase="/aula"
+        unit={{ one: "curso", many: "cursos" }}
+        hint="Toca un bloque para ver tus cursos de ese pilar."
+      />
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
+        <ActionList
+          title="Lo que sigue"
+          actions={actions}
+          emptyText="Todo al día: sin entregas ni planillas pendientes."
+        />
 
-      <div className="grid gap-5">
-        <Link href="/aula" className="card grid gap-1 bg-white no-underline hover:border-cobalt/30">
-          <p className="text-xs font-bold tracking-wide text-muted uppercase">Mis clases</p>
-          <p className="text-3xl font-black text-navy tabular">{aula.courses.length}</p>
-          <p className="text-xs text-muted">cursos · busca y filtra por grupo o asignatura →</p>
-        </Link>
+        <div className="grid gap-5">
+          <Link
+            href="/aula"
+            className="card grid gap-1 bg-white no-underline hover:border-cobalt/30"
+          >
+            <p className="text-xs font-bold tracking-wide text-muted uppercase">
+              Mis clases
+            </p>
+            <p className="text-3xl font-black text-navy tabular">
+              {aula.courses.length}
+            </p>
+            <p className="text-xs text-muted">
+              cursos · busca y filtra por grupo o asignatura →
+            </p>
+          </Link>
 
-        {directed.map((g) => (
-          <div key={g.groupId} className="card grid gap-3 bg-white">
-            <div>
-              <p className="text-xs font-bold tracking-wide text-muted uppercase">Dirección de grupo</p>
-              <p className="text-lg font-extrabold text-navy">
-                {g.groupName} · {g.gradeName}
-              </p>
-              <p className="text-xs text-muted tabular">{g.studentCount} estudiantes</p>
+          {directed.map((g) => (
+            <div key={g.groupId} className="card grid gap-3 bg-white">
+              <div>
+                <p className="text-xs font-bold tracking-wide text-muted uppercase">
+                  Dirección de grupo
+                </p>
+                <p className="text-lg font-extrabold text-navy">
+                  {g.groupName} · {g.gradeName}
+                </p>
+                <p className="text-xs text-muted tabular">
+                  {g.studentCount} estudiantes
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  {
+                    href: `/siga/boletines?grupo=${g.groupId}`,
+                    text: "Boletines",
+                  },
+                  {
+                    href: `/siga/observador?grupo=${g.groupId}`,
+                    text: "Observador",
+                  },
+                ].map((l) => (
+                  <Link
+                    key={l.text}
+                    href={l.href}
+                    className="rounded-control border border-line px-3 py-1.5 text-xs font-bold text-navy no-underline hover:bg-cloud"
+                  >
+                    {l.text}
+                  </Link>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { href: `/siga/boletines?grupo=${g.groupId}`, text: "Boletines" },
-                { href: `/siga/observador?grupo=${g.groupId}`, text: "Observador" },
-              ].map((l) => (
-                <Link
-                  key={l.text}
-                  href={l.href}
-                  className="rounded-control border border-line px-3 py-1.5 text-xs font-bold text-navy no-underline hover:bg-cloud"
-                >
-                  {l.text}
-                </Link>
-              ))}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

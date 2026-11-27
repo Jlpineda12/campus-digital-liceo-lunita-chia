@@ -1,5 +1,13 @@
-import { FileCheck2, FilePenLine, Layers, MessageSquareWarning, ScrollText, UserCheck } from "lucide-react";
+import {
+  FileCheck2,
+  FilePenLine,
+  Layers,
+  MessageSquareWarning,
+  ScrollText,
+  UserCheck,
+} from "lucide-react";
 import Link from "next/link";
+import { countByPillar, StheamiBlocks } from "@/components/aula/StheamiBlocks";
 import { listAulaCoursesForActor } from "@/modules/aula/queries";
 import type { AcademicContext } from "@/modules/core/academic-structure/queries";
 import type { SessionUser } from "@/modules/core/auth/session";
@@ -25,7 +33,9 @@ export async function StaffHome({
   const period = context.currentPeriod;
   const [aula, overview] = await Promise.all([
     listAulaCoursesForActor(actor, context.year.id),
-    period ? getPeriodComplianceOverview(context.year.id, period.id) : Promise.resolve(null),
+    period
+      ? getPeriodComplianceOverview(context.year.id, period.id)
+      : Promise.resolve(null),
   ]);
 
   const emptyCourses = aula.courses.filter((c) => c.unitCount === 0).length;
@@ -87,44 +97,77 @@ export async function StaffHome({
   const total = aula.courses.length;
   const bars = overview
     ? [
-        { label: "Notas subidas", value: overview.summary.overallGradesPercent },
-        { label: "Logros redactados", value: overview.summary.overallLogrosPercent },
-        { label: "Cursos con contenido", value: total > 0 ? Math.round(((total - emptyCourses) / total) * 100) : 0 },
+        {
+          label: "Notas subidas",
+          value: overview.summary.overallGradesPercent,
+        },
+        {
+          label: "Logros redactados",
+          value: overview.summary.overallLogrosPercent,
+        },
+        {
+          label: "Cursos con contenido",
+          value:
+            total > 0 ? Math.round(((total - emptyCourses) / total) * 100) : 0,
+        },
       ]
     : [];
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
-      <ActionList title="Requiere atención" actions={actions} emptyText="Nada urgente por ahora." />
+    <div className="grid gap-7">
+      <StheamiBlocks
+        counts={countByPillar(aula.courses)}
+        hrefBase="/aula/seguimiento"
+        unit={{ one: "curso", many: "cursos" }}
+        hint="Toca un bloque para revisar los cursos de ese pilar."
+      />
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
+        <ActionList
+          title="Requiere atención"
+          actions={actions}
+          emptyText="Nada urgente por ahora."
+        />
 
-      <Link href="/aula/seguimiento" className="card grid gap-4 bg-white no-underline hover:border-cobalt/30">
-        <div>
-          <p className="flex items-center gap-1.5 text-xs font-bold tracking-wide text-muted uppercase">
-            <UserCheck className="size-4 text-cobalt" aria-hidden /> Avance {period ? `· ${period.name}` : "del periodo"}
-          </p>
-        </div>
-        {bars.length === 0 ? (
-          <p className="text-sm text-muted">No hay un periodo vigente.</p>
-        ) : (
-          <ul className="grid gap-3">
-            {bars.map((b) => (
-              <li key={b.label} className="grid gap-1">
-                <span className="flex justify-between text-sm">
-                  <span className="font-semibold text-navy">{b.label}</span>
-                  <span className="font-black text-navy tabular">{b.value}%</span>
-                </span>
-                <span className="h-2 overflow-hidden rounded-full bg-line" aria-hidden>
+        <Link
+          href="/aula/seguimiento"
+          className="card grid gap-4 bg-white no-underline hover:border-cobalt/30"
+        >
+          <div>
+            <p className="flex items-center gap-1.5 text-xs font-bold tracking-wide text-muted uppercase">
+              <UserCheck className="size-4 text-cobalt" aria-hidden /> Avance{" "}
+              {period ? `· ${period.name}` : "del periodo"}
+            </p>
+          </div>
+          {bars.length === 0 ? (
+            <p className="text-sm text-muted">No hay un periodo vigente.</p>
+          ) : (
+            <ul className="grid gap-3">
+              {bars.map((b) => (
+                <li key={b.label} className="grid gap-1">
+                  <span className="flex justify-between text-sm">
+                    <span className="font-semibold text-navy">{b.label}</span>
+                    <span className="font-black text-navy tabular">
+                      {b.value}%
+                    </span>
+                  </span>
                   <span
-                    className={`block h-full rounded-full ${b.value >= 100 ? "bg-green-solid" : "bg-cobalt"}`}
-                    style={{ width: `${Math.min(100, b.value)}%` }}
-                  />
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <span className="text-xs font-bold text-cobalt">Ver seguimiento por docente →</span>
-      </Link>
+                    className="h-2 overflow-hidden rounded-full bg-line"
+                    aria-hidden
+                  >
+                    <span
+                      className={`block h-full rounded-full ${b.value >= 100 ? "bg-green-solid" : "bg-cobalt"}`}
+                      style={{ width: `${Math.min(100, b.value)}%` }}
+                    />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <span className="text-xs font-bold text-cobalt">
+            Ver seguimiento por docente →
+          </span>
+        </Link>
+      </div>
     </div>
   );
 }

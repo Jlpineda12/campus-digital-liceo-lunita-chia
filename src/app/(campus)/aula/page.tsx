@@ -9,16 +9,21 @@ import { PlatformLogo } from "@/components/ui/PlatformLogo";
 import { TactileCard } from "@/components/ui/TactileCard";
 import { listAulaCoursesForActor } from "@/modules/aula/queries";
 import { getCurrentAcademicContext } from "@/modules/core/academic-structure/queries";
+import { isStheamiPillar } from "@/modules/core/academic-structure/stheami";
 import { requireSession } from "@/modules/core/auth/guards";
 import { PLATFORM_SPACES } from "@/modules/core/brand/config";
 import { stageForLevel } from "@/modules/core/dashboard/stage";
 
 export const metadata: Metadata = { title: "Órbita Virtual · Mis cursos" };
 
-export default async function AulaHomePage() {
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function AulaHomePage({ searchParams }: { searchParams: SearchParams }) {
   const actor = await requireSession();
   // Directivos revisan los cursos en «Seguimiento de cursos».
   if (actor.role === "COORDINATOR" || actor.role === "ADMIN") redirect("/aula/seguimiento");
+  const rawPillar = (await searchParams).pilar;
+  const pillar = isStheamiPillar(rawPillar) ? rawPillar : null;
   const context = await getCurrentAcademicContext();
   if (!context) {
     return (
@@ -83,13 +88,13 @@ export default async function AulaHomePage() {
       </header>
 
       {!isFamily && data.courses.length > 0 ? (
-        <CourseDirectory courses={data.courses} mode="teacher" />
+        <CourseDirectory courses={data.courses} mode="teacher" pillar={pillar} />
       ) : data.courses.length === 0 ? (
         <TactileCard className="py-10 text-center text-muted">
           No encontramos cursos asignados para este año lectivo.
         </TactileCard>
       ) : (
-        <StudentCourseBoard courses={data.courses} />
+        <StudentCourseBoard courses={data.courses} pillar={pillar} />
       )}
     </div>
   );

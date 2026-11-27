@@ -1,12 +1,15 @@
 "use client";
 
-import { ArrowRight, BookOpen, ChevronRight, Star, ClipboardCheck, Layers, Palette, Search, Table2, UserCheck } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronRight, Star, X, ClipboardCheck, Layers, Palette, Search, Table2, UserCheck } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { StheamiBadge } from "@/components/ui/StheamiBadge";
 import { parseList, useLocalPreference } from "@/components/ui/useLocalPreference";
 import type { AulaCourseCard } from "@/modules/aula/queries";
 import { resolveBannerGradient } from "@/modules/aula/themes";
+import { PILLAR_META, type StheamiPillar } from "@/modules/core/academic-structure/stheami";
+import { StheamiIcon } from "@/components/brand/StheamiIcon";
 
 export interface CourseCompliance {
   gradesPercent: number;
@@ -29,16 +32,22 @@ function normalize(text: string) {
  * personalizó el curso y subió notas/logros del periodo.
  */
 export function CourseDirectory({
-  courses,
+  courses: allCourses,
   mode,
   compliance = {},
   periodName,
+  pillar = null,
 }: {
   courses: AulaCourseCard[];
   mode: "teacher" | "staff";
   compliance?: Record<string, CourseCompliance>;
   periodName?: string;
+  /** Pilar STHEAMI elegido en los bloques del Inicio (`?pilar=X`). */
+  pillar?: StheamiPillar | null;
 }) {
+  const pathname = usePathname();
+  const pillarMeta = pillar ? PILLAR_META[pillar] : null;
+  const courses = pillar ? allCourses.filter((c) => c.pillar === pillar) : allCourses;
   const isStaff = mode === "staff";
   const [query, setQuery] = useState("");
   // La vista elegida (agrupación y filtro) y los cursos fijados se recuerdan en este navegador.
@@ -170,6 +179,24 @@ export function CourseDirectory({
           })}
         </div>
       </div>
+
+      {pillarMeta && (
+        <div className={`flex flex-wrap items-center justify-between gap-3 t-${pillarMeta.tone}`}>
+          <p className="flex items-center gap-2 text-base font-extrabold text-navy">
+            <StheamiIcon pillar={pillarMeta.letter} size={28} />
+            {pillarMeta.name}
+            <span className="text-xs font-bold text-muted">
+              {courses.length} de {allCourses.length} cursos
+            </span>
+          </p>
+          <Link
+            href={pathname}
+            className="inline-flex items-center gap-1.5 rounded-pill border border-line bg-white px-3.5 py-1.5 text-xs font-bold text-navy no-underline hover:bg-cloud"
+          >
+            <X className="size-3.5" aria-hidden /> Quitar filtro de pilar
+          </Link>
+        </div>
+      )}
 
       <p className="sr-only" aria-live="polite">
         {shown} cursos visibles

@@ -309,6 +309,13 @@
    Base
    --------------------------------------------------------------------------- */
 @layer base {
+  /* Responsive: una cuadrícula de UNA columna nunca debe crecer más que su
+     contenedor por un texto largo o una fila sin salto (era la causa de
+     desbordes horizontales en móvil). Especificidad cero:
+     las utilidades sm:grid-cols-* y lg:grid-cols-* siguen mandando. */
+  :where(.grid:not([class*=" grid-cols-"]):not([class^="grid-cols-"])) {
+    grid-template-columns: minmax(0, 1fr);
+  }
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -677,6 +684,19 @@
     line-height: 1.3;
     text-transform: uppercase;
     white-space: nowrap;
+  }
+  /* En pantallas angostas, botones y etiquetas largas parten su texto en vez de
+     salirse de la pantalla (nunca más anchos que su contenedor). */
+  .btn,
+  .chip {
+    max-width: 100%;
+  }
+  @media (width < 40rem) {
+    .btn,
+    .chip {
+      white-space: normal;
+      text-align: center;
+    }
   }
   .chip svg {
     width: 14px;
@@ -1336,7 +1356,7 @@
   }
   .stheami-blocks__title {
     color: var(--navy);
-    font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.1rem);
+    font-size: clamp(1.3rem, 1rem + 1vw, 1.7rem);
     font-weight: 900;
     letter-spacing: -0.01em;
   }
@@ -1356,19 +1376,26 @@
   .stheami-blocks__all:hover {
     background: var(--cloud);
   }
+  /* Siempre UNA fila: 7 columnas si caben; si no, tira deslizable con imán. */
   .stheami-blocks__grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.8rem;
+    grid-auto-columns: 8.75rem;
+    grid-auto-flow: column;
+    gap: 0.7rem;
+    margin-inline: -0.25rem;
+    padding: 0.35rem 0.25rem 0.6rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
   }
-  @container (width >= 34rem) {
-    .stheami-blocks__grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
+  .stheami-blocks__grid > li {
+    scroll-snap-align: start;
   }
-  @container (width >= 62rem) {
+  @container (width >= 54rem) {
     .stheami-blocks__grid {
-      grid-template-columns: repeat(7, minmax(0, 1fr));
+      grid-auto-columns: minmax(0, 1fr);
+      overflow: visible;
     }
   }
   .stheami-blocks__grid > li {
@@ -1381,14 +1408,16 @@
     position: relative;
     display: grid;
     align-content: start;
-    gap: 0.3rem;
-    min-height: 8.4rem;
-    padding: 1rem;
+    gap: 0.2rem;
+    min-height: 7.4rem;
+    padding: 0.85rem;
     border: 2px solid var(--line);
     border-bottom: 5px solid var(--c);
     border-radius: 20px;
     background: #fff;
+    color: inherit;
     text-align: left;
+    text-decoration: none;
     cursor: pointer;
     transition:
       transform 260ms var(--spring),
@@ -1397,21 +1426,13 @@
       background-color 200ms ease,
       opacity 200ms ease;
   }
-  .stheami-block:not(:disabled):hover {
+  a.stheami-block:hover {
     transform: translateY(-4px);
     box-shadow: 0 14px 26px -18px color-mix(in oklab, var(--c) 80%, #000);
   }
-  .stheami-block:disabled {
+  .stheami-block[aria-disabled="true"] {
     cursor: default;
     opacity: 0.45;
-  }
-  .stheami-block[aria-pressed="true"] {
-    border-color: var(--c);
-    background: var(--l);
-    box-shadow: 0 0 0 4px color-mix(in oklab, var(--c) 30%, transparent);
-  }
-  .stheami-blocks[data-has-selection] .stheami-block:not([aria-pressed="true"]):not(:disabled) {
-    opacity: 0.6;
   }
   .stheami-block:focus-visible {
     outline: 3px solid var(--cobalt);
@@ -1419,15 +1440,15 @@
   }
   .stheami-block__letter {
     display: grid;
-    width: 2.6rem;
-    height: 2.6rem;
+    width: 2.3rem;
+    height: 2.3rem;
     place-items: center;
     border-radius: 12px;
     background: var(--c);
     box-shadow: 0 4px 0 var(--cd);
     color: #fff;
     font-family: var(--font-playful);
-    font-size: 1.35rem;
+    font-size: 1.2rem;
     font-weight: 900;
     text-shadow: 0 1px 0 rgb(0 0 0 / 0.12);
   }
@@ -1437,23 +1458,26 @@
   }
   .stheami-block__icon {
     position: absolute;
-    top: 0.85rem;
-    right: 0.85rem;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 34px;
+    height: 34px;
     animation: stheami-sticker-in 620ms var(--spring) both;
     animation-delay: calc(var(--i) * 70ms + 260ms);
     transition: transform 280ms var(--spring);
   }
-  .stheami-block:not(:disabled):hover .stheami-block__icon {
+  a.stheami-block:hover .stheami-block__icon {
     animation: stheami-wiggle 600ms ease-in-out;
   }
   .stheami-block__name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    margin-top: 0.45rem;
+    hyphens: auto;
+    overflow-wrap: break-word;
+    line-height: 1.15;
+    margin-top: 0.35rem;
     color: var(--navy);
-    font-size: 1rem;
+    font-size: 0.92rem;
     font-weight: 900;
+    letter-spacing: -0.01em;
   }
   .stheami-block__count {
     color: var(--muted);
@@ -1507,7 +1531,7 @@
     font-size: 1.15rem;
     font-weight: 800;
   }
-  [data-stage="bachillerato"] .stheami-block:not(:disabled):hover .stheami-block__icon {
+  [data-stage="bachillerato"] a.stheami-block:hover .stheami-block__icon {
     animation: none;
     transform: scale(1.08);
   }

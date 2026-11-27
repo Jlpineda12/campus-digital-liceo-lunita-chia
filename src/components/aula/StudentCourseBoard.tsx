@@ -1,63 +1,64 @@
-"use client";
-
-import { ArrowRight, CheckCircle2, ClipboardList } from "lucide-react";
+import { ArrowRight, CheckCircle2, ClipboardList, X } from "lucide-react";
 import Link from "next/link";
-import { useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { CourseEmblemIcon } from "@/components/aula/CourseBanner";
+import { StheamiIcon } from "@/components/brand/StheamiIcon";
 import type { AulaCourseCard } from "@/modules/aula/queries";
 import { resolveBannerGradient } from "@/modules/aula/themes";
 import { PILLAR_META, STHEAMI_PILLARS, type StheamiPillar } from "@/modules/core/academic-structure/stheami";
-import { StheamiIcon } from "@/components/brand/StheamiIcon";
-import { StheamiBlocks } from "./StheamiBlocks";
 
 /**
- * «Mis cursos» del estudiante: la constelación STHEAMI arriba (y como filtro)
- * y las materias agrupadas por pilar. Dentro de cada pilar, primero las que
- * tienen algo pendiente. Cada tarjeta respeta la portada que eligió el docente.
+ * «Mis cursos» del estudiante: materias en el orden S-T-H-E-A-M-I. Si llega
+ * `?pilar=X` (desde los bloques STHEAMI del Inicio) se muestran solo las de
+ * ese pilar, con lo pendiente primero. Cada tarjeta respeta la portada del docente.
  */
-export function StudentCourseBoard({ courses }: { courses: AulaCourseCard[] }) {
-  const [selected, setSelected] = useState<StheamiPillar | null>(null);
-
-  const counts: Partial<Record<StheamiPillar, number>> = {};
-  for (const c of courses) counts[c.pillar] = (counts[c.pillar] ?? 0) + 1;
-
-  // Sin filtro: una sola cuadrícula en el orden S-T-H-E-A-M-I (ritmo de color).
-  // Con filtro: solo ese pilar, con lo pendiente primero.
+export function StudentCourseBoard({
+  courses,
+  pillar,
+}: {
+  courses: AulaCourseCard[];
+  pillar: StheamiPillar | null;
+}) {
   const order = (p: StheamiPillar) => STHEAMI_PILLARS.indexOf(p);
   const visible = courses
-    .filter((c) => !selected || c.pillar === selected)
+    .filter((c) => !pillar || c.pillar === pillar)
     .sort(
       (a, b) =>
-        (selected ? b.pendingCount - a.pendingCount : order(a.pillar) - order(b.pillar)) ||
+        (pillar ? b.pendingCount - a.pendingCount : order(a.pillar) - order(b.pillar)) ||
         a.subjectName.localeCompare(b.subjectName, "es"),
     );
-  const meta = selected ? PILLAR_META[selected] : null;
+  const meta = pillar ? PILLAR_META[pillar] : null;
 
   return (
-    <div className="grid gap-6">
-      <StheamiBlocks counts={counts} selected={selected} onSelect={setSelected} />
-
-      <section aria-label={meta ? `Materias de ${meta.name}` : "Todas mis materias"} className={meta ? `pillar-shelf t-${meta.tone}` : "pillar-shelf"}>
-        {meta && (
+    <section
+      aria-label={meta ? `Materias de ${meta.name}` : "Todas mis materias"}
+      className={meta ? `pillar-shelf t-${meta.tone}` : "pillar-shelf"}
+    >
+      {meta && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="pillar-shelf__title">
-            <span className="pillar-shelf__letter" aria-hidden>
-              {meta.letter}
-            </span>
+            <StheamiIcon pillar={meta.letter} size={30} />
             {meta.name}
             <span className="pillar-shelf__count">
               {visible.length} {visible.length === 1 ? "materia" : "materias"}
             </span>
           </h2>
-        )}
-        <ul key={selected ?? "todas"} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((course, i) => (
-            <li key={course.courseAssignmentId} className="course-pop" style={{ "--i": i } as CSSProperties}>
-              <CourseCard course={course} />
-            </li>
-          ))}
-        </ul>
-      </section>
-    </div>
+          <Link
+            href="/aula"
+            className="inline-flex items-center gap-1.5 rounded-pill border border-line bg-white px-3.5 py-1.5 text-xs font-bold text-navy no-underline hover:bg-cloud"
+          >
+            <X className="size-3.5" aria-hidden /> Ver todas las materias
+          </Link>
+        </div>
+      )}
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {visible.map((course, i) => (
+          <li key={course.courseAssignmentId} className="course-pop" style={{ "--i": i } as CSSProperties}>
+            <CourseCard course={course} />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

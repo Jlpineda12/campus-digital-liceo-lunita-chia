@@ -4,20 +4,25 @@ import { CourseDirectory, type CourseCompliance } from "@/components/aula/Course
 import { TactileCard } from "@/components/ui/TactileCard";
 import { listAulaCoursesForActor } from "@/modules/aula/queries";
 import { getCurrentAcademicContext } from "@/modules/core/academic-structure/queries";
+import { isStheamiPillar } from "@/modules/core/academic-structure/stheami";
 import { requireSession } from "@/modules/core/auth/guards";
 import { can } from "@/modules/core/auth/permissions";
 import { getPeriodComplianceOverview } from "@/modules/siga/siee-grades/compliance";
 
 export const metadata: Metadata = { title: "Seguimiento de cursos" };
 
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
 /**
  * Coordinación y Rectoría: ¿cada docente cargó contenido, personalizó su curso
  * y subió notas y logros del periodo? Todo en una lista filtrable.
  */
-export default async function SeguimientoCursosPage() {
+export default async function SeguimientoCursosPage({ searchParams }: { searchParams: SearchParams }) {
   const actor = await requireSession();
   if (!can(actor.role, "reportCards.preview")) redirect("/aula");
 
+  const rawPillar = (await searchParams).pilar;
+  const pillar = isStheamiPillar(rawPillar) ? rawPillar : null;
   const context = await getCurrentAcademicContext();
   if (!context) {
     return <TactileCard className="text-center text-muted">No hay un año lectivo vigente.</TactileCard>;
@@ -77,7 +82,13 @@ export default async function SeguimientoCursosPage() {
         })}
       </ul>
 
-      <CourseDirectory courses={data.courses} mode="staff" compliance={compliance} periodName={period?.name} />
+      <CourseDirectory
+        courses={data.courses}
+        mode="staff"
+        compliance={compliance}
+        periodName={period?.name}
+        pillar={pillar}
+      />
     </div>
   );
 }
